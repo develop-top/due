@@ -13,7 +13,7 @@
 1.安装
 
 ```shell
-go get -u github.com/dobyte/due/config/consul/v2@latest
+go get -u github.com/develop-top/due/config/consul/v2@latest
 ```
 
 2.consul配置项
@@ -38,9 +38,9 @@ package main
 
 import (
     "context"
-    "github.com/dobyte/due/config/consul/v2"
-    "github.com/dobyte/due/v2/config"
-    "github.com/dobyte/due/v2/log"
+    "github.com/develop-top/due/config/consul/v2"
+    "github.com/develop-top/due/v2/config"
+    "github.com/develop-top/due/v2/log"
     "time"
 )
 
@@ -88,4 +88,4 @@ func main() {
 
 ### 3.详细示例
 
-更多详细示例请点击[due-examples](https://github.com/dobyte/due-examples)
+更多详细示例请点击[due-examples](https://github.com/develop-top/due-examples)

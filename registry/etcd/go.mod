@@ -1,9 +1,9 @@
-module github.com/dobyte/due/registry/etcd/v2
+module github.com/develop-top/due/registry/etcd/v2
 
 go 1.22.9
 
 require (
-	github.com/dobyte/due/v2 v2.2.4
+	github.com/develop-top/due/v2 v2.2.4
 	go.etcd.io/etcd/api/v3 v3.5.16
 	go.etcd.io/etcd/client/v3 v3.5.16
 )
@@ -39,4 +39,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/dobyte/due/v2 => ../../
+replace github.com/develop-top/due/v2 => ../../

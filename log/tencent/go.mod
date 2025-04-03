@@ -1,9 +1,9 @@
-module github.com/dobyte/due/log/tencent/v2
+module github.com/develop-top/due/log/tencent/v2
 
 go 1.22.9
 
 require (
-	github.com/dobyte/due/v2 v2.2.4
+	github.com/develop-top/due/v2 v2.2.4
 	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.11
 )
 
@@ -30,4 +30,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/dobyte/due/v2 => ../../
+replace github.com/develop-top/due/v2 => ../../

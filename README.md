@@ -1,10 +1,10 @@
 # due 基于Go语言开发的高性能分布式游戏服务器框架
 
-[![Build Status](https://github.com/dobyte/due/workflows/Go/badge.svg)](https://github.com/dobyte/due/actions)
-[![goproxy](https://goproxy.cn/stats/github.com/dobyte/due/v2/badges/download-count.svg)](https://goproxy.cn/stats/github.com/dobyte/due/badges/download-count.svg)
-[![Go Reference](https://pkg.go.dev/badge/github.com/dobyte/due.svg)](https://pkg.go.dev/github.com/dobyte/due)
+[![Build Status](https://github.com/develop-top/due/workflows/Go/badge.svg)](https://github.com/develop-top/due/actions)
+[![goproxy](https://goproxy.cn/stats/github.com/develop-top/due/v2/badges/download-count.svg)](https://goproxy.cn/stats/github.com/develop-top/due/badges/download-count.svg)
+[![Go Reference](https://pkg.go.dev/badge/github.com/develop-top/due.svg)](https://pkg.go.dev/github.com/develop-top/due)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Go Report Card](https://goreportcard.com/badge/github.com/dobyte/due)](https://goreportcard.com/report/github.com/dobyte/due)
+[![Go Report Card](https://goreportcard.com/badge/github.com/develop-top/due)](https://goreportcard.com/report/github.com/develop-top/due)
 ![Coverage](https://img.shields.io/badge/Coverage-17.4%25-red)
 [![Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go)
 
@@ -44,7 +44,7 @@ due是一款基于Go语言开发的轻量级、高性能分布式游戏服务器
 * 服务：支持grpc、rpcx等多种微服务解决方案。
 * 灵活：支持单体、分布式等多种架构方案。
 * Web：提供http协议的fiber服务器及swagger文档解决方案。
-* 工具：提供[due-cli](https://github.com/dobyte/due-cli)脚手架工具箱，可快速构建集群项目。
+* 工具：提供[due-cli](https://github.com/develop-top/due-cli)脚手架工具箱，可快速构建集群项目。
 * 缓存：支持redis、memcache等多种常用的缓存方案。
 * Actor：提供完善actor模型解决方案。
 * 分布式锁：支持redis、memcache等多种分布式锁解决方案。
@@ -236,11 +236,11 @@ docker-compose up
 2.获取框架
 
 ```shell
-go get -u github.com/dobyte/due/v2@latest
-go get -u github.com/dobyte/due/locate/redis/v2@latest
-go get -u github.com/dobyte/due/network/ws/v2@latest
-go get -u github.com/dobyte/due/registry/consul/v2@latest
-go get -u github.com/dobyte/due/transport/rpcx/v2@latest
+go get -u github.com/develop-top/due/v2@latest
+go get -u github.com/develop-top/due/locate/redis/v2@latest
+go get -u github.com/develop-top/due/network/ws/v2@latest
+go get -u github.com/develop-top/due/registry/consul/v2@latest
+go get -u github.com/develop-top/due/transport/rpcx/v2@latest
 ```
 
 3.构建Gate服务器
@@ -249,11 +249,11 @@ go get -u github.com/dobyte/due/transport/rpcx/v2@latest
 package main
 
 import (
-   "github.com/dobyte/due/locate/redis/v2"
-   "github.com/dobyte/due/network/ws/v2"
-   "github.com/dobyte/due/registry/consul/v2"
-   "github.com/dobyte/due/v2"
-   "github.com/dobyte/due/v2/cluster/gate"
+   "github.com/develop-top/due/locate/redis/v2"
+   "github.com/develop-top/due/network/ws/v2"
+   "github.com/develop-top/due/registry/consul/v2"
+   "github.com/develop-top/due/v2"
+   "github.com/develop-top/due/v2/cluster/gate"
 )
 
 func main() {
@@ -288,7 +288,7 @@ $ go run main.go
                  / /_/ / /_/ / /___
                 /_____/\____/_____/
 ┌──────────────────────────────────────────────────────┐
-| [Website] https://github.com/dobyte/due              |
+| [Website] https://github.com/develop-top/due              |
 | [Version] v2.1.0                                     |
 └──────────────────────────────────────────────────────┘
 ┌────────────────────────Global────────────────────────┐
@@ -311,13 +311,13 @@ package main
 
 import (
    "fmt"
-   "github.com/dobyte/due/locate/redis/v2"
-   "github.com/dobyte/due/registry/consul/v2"
-   "github.com/dobyte/due/v2"
-   "github.com/dobyte/due/v2/cluster/node"
-   "github.com/dobyte/due/v2/codes"
-   "github.com/dobyte/due/v2/log"
-   "github.com/dobyte/due/v2/utils/xtime"
+   "github.com/develop-top/due/locate/redis/v2"
+   "github.com/develop-top/due/registry/consul/v2"
+   "github.com/develop-top/due/v2"
+   "github.com/develop-top/due/v2/cluster/node"
+   "github.com/develop-top/due/v2/codes"
+   "github.com/develop-top/due/v2/log"
+   "github.com/develop-top/due/v2/utils/xtime"
 )
 
 const greet = 1
@@ -387,7 +387,7 @@ $ go run main.go
                  / /_/ / /_/ / /___
                 /_____/\____/_____/
 ┌──────────────────────────────────────────────────────┐
-| [Website] https://github.com/dobyte/due              |
+| [Website] https://github.com/develop-top/due              |
 | [Version] v2.1.0                                     |
 └──────────────────────────────────────────────────────┘
 ┌────────────────────────Global────────────────────────┐
@@ -412,14 +412,14 @@ package main
 
 import (
    "fmt"
-   "github.com/dobyte/due/eventbus/nats/v2"
-   "github.com/dobyte/due/network/ws/v2"
-   "github.com/dobyte/due/v2"
-   "github.com/dobyte/due/v2/cluster"
-   "github.com/dobyte/due/v2/cluster/client"
-   "github.com/dobyte/due/v2/eventbus"
-   "github.com/dobyte/due/v2/log"
-   "github.com/dobyte/due/v2/utils/xtime"
+   "github.com/develop-top/due/eventbus/nats/v2"
+   "github.com/develop-top/due/network/ws/v2"
+   "github.com/develop-top/due/v2"
+   "github.com/develop-top/due/v2/cluster"
+   "github.com/develop-top/due/v2/cluster/client"
+   "github.com/develop-top/due/v2/eventbus"
+   "github.com/develop-top/due/v2/log"
+   "github.com/develop-top/due/v2/utils/xtime"
    "time"
 )
 
@@ -518,7 +518,7 @@ $ go run main.go
                  / /_/ / /_/ / /___
                 /_____/\____/_____/
 ┌──────────────────────────────────────────────────────┐
-| [Website] https://github.com/dobyte/due              |
+| [Website] https://github.com/develop-top/due              |
 | [Version] v2.1.0                                     |
 └──────────────────────────────────────────────────────┘
 ┌────────────────────────Global────────────────────────┐
@@ -555,7 +555,7 @@ Ubuntu 20.04.6 LTS 13th Gen Intel(R) Core(TM) i5-13400F 16GB
                  / /_/ / /_/ / /___
                 /_____/\____/_____/
 ┌──────────────────────────────────────────────────────┐
-| [Website] https://github.com/dobyte/due              |
+| [Website] https://github.com/develop-top/due              |
 | [Version] v2.1.0                                     |
 └──────────────────────────────────────────────────────┘
 ┌────────────────────────Global────────────────────────┐
@@ -634,52 +634,52 @@ throughput (TPS)     : 128969
 --------------------------------
 ```
 
-本测试结果仅供参考，详细测试用例代码请查看[due-benchmark](https://github.com/dobyte/due-benchmark)
+本测试结果仅供参考，详细测试用例代码请查看[due-benchmark](https://github.com/develop-top/due-benchmark)
 
 ### 13.其他组件
 
 1. 日志组件
-    * zap: github.com/dobyte/due/log/zap/v2
-    * logrus: github.com/dobyte/due/log/logrus/v2
-    * aliyun: github.com/dobyte/due/log/aliyun/v2
-    * tencent: github.com/dobyte/due/log/zap/v2
+    * zap: github.com/develop-top/due/log/zap/v2
+    * logrus: github.com/develop-top/due/log/logrus/v2
+    * aliyun: github.com/develop-top/due/log/aliyun/v2
+    * tencent: github.com/develop-top/due/log/zap/v2
 2. 网络组件
-    * ws: github.com/dobyte/due/network/ws/v2
-    * tcp: github.com/dobyte/due/network/tcp/v2
-    * kcp: github.com/dobyte/due/network/kcp/v2
+    * ws: github.com/develop-top/due/network/ws/v2
+    * tcp: github.com/develop-top/due/network/tcp/v2
+    * kcp: github.com/develop-top/due/network/kcp/v2
 3. 注册发现
-    * etcd: github.com/dobyte/due/registry/etcd/v2
-    * consul: github.com/dobyte/due/registry/consul/v2
-    * nacos: github.com/dobyte/due/registry/nacos/v2
+    * etcd: github.com/develop-top/due/registry/etcd/v2
+    * consul: github.com/develop-top/due/registry/consul/v2
+    * nacos: github.com/develop-top/due/registry/nacos/v2
 4. 传输组件
-    * grpc: github.com/dobyte/due/transporter/grpc/v2
-    * rpcx: github.com/dobyte/due/transporter/rpcx/v2
+    * grpc: github.com/develop-top/due/transporter/grpc/v2
+    * rpcx: github.com/develop-top/due/transporter/rpcx/v2
 5. 定位组件
-    * redis: github.com/dobyte/due/locate/redis/v2
+    * redis: github.com/develop-top/due/locate/redis/v2
 6. 事件总线
-    * redis: github.com/dobyte/due/eventbus/redis/v2
-    * nats: github.com/dobyte/due/eventbus/nats/v2
-    * kafka: github.com/dobyte/due/eventbus/kafka/v2
+    * redis: github.com/develop-top/due/eventbus/redis/v2
+    * nats: github.com/develop-top/due/eventbus/nats/v2
+    * kafka: github.com/develop-top/due/eventbus/kafka/v2
 7. Web组件
-    * http: github.com/dobyte/due/component/http/v2
+    * http: github.com/develop-top/due/component/http/v2
 8. 配置中心
-   * etcd: github.com/dobyte/due/config/etcd/v2
-   * consul: github.com/dobyte/due/config/consul/v2
-   * nacos: github.com/dobyte/due/config/nacos/v2
+   * etcd: github.com/develop-top/due/config/etcd/v2
+   * consul: github.com/develop-top/due/config/consul/v2
+   * nacos: github.com/develop-top/due/config/nacos/v2
 9. 缓存组件
-   * redis: github.com/dobyte/due/cache/redis/v2
+   * redis: github.com/develop-top/due/cache/redis/v2
 10. 分布式锁组件
-    * redis: github.com/dobyte/due/lock/redis/v2
+    * redis: github.com/develop-top/due/lock/redis/v2
 
 ### 14.其他客户端
 
-* [due-client-ts](https://github.com/dobyte/due-client-ts)
-* [due-client-shape](https://github.com/dobyte/due-client-shape)
+* [due-client-ts](https://github.com/develop-top/due-client-ts)
+* [due-client-shape](https://github.com/develop-top/due-client-shape)
 
 ### 15.详细示例
 
-- [due-examples](https://github.com/dobyte/due-examples)
-- [due-chat](https://github.com/dobyte/due-chat)
+- [due-examples](https://github.com/develop-top/due-examples)
+- [due-chat](https://github.com/develop-top/due-chat)
 
 ### 16.三方示例
 
