@@ -2,7 +2,7 @@ package info
 
 import (
 	"fmt"
-	"github.com/dobyte/due/v2/mode"
+	"github.com/develop-top/due/v2/mode"
 	"strings"
 	"syscall"
 	"unicode/utf8"
@@ -24,7 +24,7 @@ const (
 	rightTopBorder    = "┐"
 	leftBottomBorder  = "└"
 	rightBottomBorder = "┘"
-	website           = "https://github.com/dobyte/due"
+	website           = "https://github.com/develop-top/due"
 	version           = "v2.2.5"
 	global            = "Global"
 )

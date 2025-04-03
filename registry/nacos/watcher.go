@@ -2,8 +2,8 @@ package nacos
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/registry"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
 	"sync"

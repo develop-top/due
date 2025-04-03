@@ -3,7 +3,7 @@ package buffer_test
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/dobyte/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/core/buffer"
 	"io"
 	"testing"
 )

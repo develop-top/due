@@ -3,9 +3,9 @@ package packet
 import (
 	"bytes"
 	"encoding/binary"
-	"github.com/dobyte/due/v2/core/buffer"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/log"
 	"io"
 	"sync"
 	"time"

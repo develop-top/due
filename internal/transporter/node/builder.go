@@ -1,8 +1,8 @@
 package node
 
 import (
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/internal/transporter/internal/client"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/internal/transporter/internal/client"
 	"golang.org/x/sync/singleflight"
 	"sync"
 )

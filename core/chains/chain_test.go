@@ -2,7 +2,7 @@ package chains_test
 
 import (
 	"fmt"
-	"github.com/dobyte/due/v2/core/chains"
+	"github.com/develop-top/due/v2/core/chains"
 	"testing"
 )
 

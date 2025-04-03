@@ -2,8 +2,8 @@ package redis
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/eventbus"
-	"github.com/dobyte/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/eventbus"
+	"github.com/develop-top/due/v2/utils/xconv"
 	"github.com/go-redis/redis/v8"
 	"strings"
 	"sync"

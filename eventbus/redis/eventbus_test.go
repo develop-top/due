@@ -2,8 +2,8 @@ package redis_test
 
 import (
 	"context"
-	"github.com/dobyte/due/eventbus/redis/v2"
-	"github.com/dobyte/due/v2/eventbus"
+	"github.com/develop-top/due/eventbus/redis/v2"
+	"github.com/develop-top/due/v2/eventbus"
 	"log"
 	"testing"
 	"time"

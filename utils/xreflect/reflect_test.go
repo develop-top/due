@@ -1,7 +1,7 @@
 package xreflect_test
 
 import (
-	"github.com/dobyte/due/v2/utils/xreflect"
+	"github.com/develop-top/due/v2/utils/xreflect"
 	"testing"
 )
 

@@ -2,10 +2,10 @@ package gate_test
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/internal/transporter/gate"
-	"github.com/dobyte/due/v2/session"
-	"github.com/dobyte/due/v2/utils/xuuid"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/internal/transporter/gate"
+	"github.com/develop-top/due/v2/session"
+	"github.com/develop-top/due/v2/utils/xuuid"
 	"testing"
 )
 

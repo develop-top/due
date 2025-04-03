@@ -1,4 +1,4 @@
-module github.com/dobyte/due/v2
+module github.com/develop-top/due/v2
 
 go 1.22.9
 

@@ -2,11 +2,11 @@ package http
 
 import (
 	"fmt"
-	"github.com/dobyte/due/component/http/v2/swagger"
-	"github.com/dobyte/due/v2/component"
-	"github.com/dobyte/due/v2/core/info"
-	xnet "github.com/dobyte/due/v2/core/net"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/component/http/v2/swagger"
+	"github.com/develop-top/due/v2/component"
+	"github.com/develop-top/due/v2/core/info"
+	xnet "github.com/develop-top/due/v2/core/net"
+	"github.com/develop-top/due/v2/log"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/logger"

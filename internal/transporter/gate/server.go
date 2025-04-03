@@ -2,10 +2,10 @@ package gate
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/internal/transporter/internal/codes"
-	"github.com/dobyte/due/v2/internal/transporter/internal/protocol"
-	"github.com/dobyte/due/v2/internal/transporter/internal/route"
-	"github.com/dobyte/due/v2/internal/transporter/internal/server"
+	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
+	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/internal/transporter/internal/route"
+	"github.com/develop-top/due/v2/internal/transporter/internal/server"
 )
 
 type Server struct {

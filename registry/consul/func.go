@@ -2,7 +2,7 @@ package consul
 
 import (
 	"fmt"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/v2/registry"
 )
 
 // 构建实例ID

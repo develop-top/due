@@ -2,7 +2,7 @@ package redis_test
 
 import (
 	"context"
-	"github.com/dobyte/due/lock/redis/v2"
+	"github.com/develop-top/due/lock/redis/v2"
 	"sync"
 	"testing"
 	"time"

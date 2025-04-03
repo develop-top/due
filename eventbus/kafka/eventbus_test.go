@@ -2,8 +2,8 @@ package kafka_test
 
 import (
 	"context"
-	"github.com/dobyte/due/eventbus/kafka/v2"
-	"github.com/dobyte/due/v2/eventbus"
+	"github.com/develop-top/due/eventbus/kafka/v2"
+	"github.com/develop-top/due/v2/eventbus"
 	"log"
 	"testing"
 	"time"

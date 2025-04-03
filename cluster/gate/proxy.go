@@ -2,12 +2,12 @@ package gate
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/internal/link"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/mode"
-	"github.com/dobyte/due/v2/packet"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/internal/link"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/mode"
+	"github.com/develop-top/due/v2/packet"
 )
 
 type proxy struct {

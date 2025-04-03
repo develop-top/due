@@ -2,8 +2,8 @@ package xrand_test
 
 import (
 	"fmt"
-	"github.com/dobyte/due/v2/utils/xconv"
-	"github.com/dobyte/due/v2/utils/xrand"
+	"github.com/develop-top/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/utils/xrand"
 	"testing"
 )
 

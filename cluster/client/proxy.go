@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/network"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/network"
 )
 
 type Proxy struct {

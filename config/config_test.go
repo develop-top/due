@@ -2,8 +2,8 @@ package config_test
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/config"
-	"github.com/dobyte/due/v2/config/file"
+	"github.com/develop-top/due/v2/config"
+	"github.com/develop-top/due/v2/config/file"
 	"testing"
 	"time"
 )

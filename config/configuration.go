@@ -1,6 +1,6 @@
 package config
 
-import "github.com/dobyte/due/v2/errors"
+import "github.com/develop-top/due/v2/errors"
 
 // Configuration 配置项
 type Configuration struct {

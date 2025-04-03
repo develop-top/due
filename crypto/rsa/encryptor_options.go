@@ -1,9 +1,9 @@
 package rsa
 
 import (
-	"github.com/dobyte/due/v2/core/hash"
-	"github.com/dobyte/due/v2/etc"
-	"github.com/dobyte/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/core/hash"
+	"github.com/develop-top/due/v2/etc"
+	"github.com/develop-top/due/v2/utils/xconv"
 	"strings"
 )
 

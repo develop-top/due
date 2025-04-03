@@ -1,8 +1,8 @@
 package log_test
 
 import (
-	"github.com/dobyte/due/v2/core/log"
-	"github.com/dobyte/due/v2/utils/xrand"
+	"github.com/develop-top/due/v2/core/log"
+	"github.com/develop-top/due/v2/utils/xrand"
 	"testing"
 )
 

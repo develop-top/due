@@ -2,9 +2,9 @@ package core
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/config"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/utils/xfile"
+	"github.com/develop-top/due/v2/config"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/utils/xfile"
 	"io"
 	"io/fs"
 	"os"

@@ -1,6 +1,6 @@
 package client
 
-import "github.com/dobyte/due/v2/cluster"
+import "github.com/develop-top/due/v2/cluster"
 
 type Options struct {
 	Addr         string       // 连接地址

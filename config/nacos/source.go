@@ -2,9 +2,9 @@ package nacos
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/config"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/v2/config"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/log"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients"
 	"github.com/nacos-group/nacos-sdk-go/v2/clients/config_client"
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"

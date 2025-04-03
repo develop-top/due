@@ -3,9 +3,9 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"github.com/dobyte/due/v2/config"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/config"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/utils/xconv"
 	"go.etcd.io/etcd/client/v3"
 	"path/filepath"
 	"strings"

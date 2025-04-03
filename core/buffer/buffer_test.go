@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
-	"github.com/dobyte/due/v2/core/buffer"
-	"github.com/dobyte/due/v2/utils/xrand"
+	"github.com/develop-top/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/utils/xrand"
 	"testing"
 )
 

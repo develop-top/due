@@ -1,8 +1,8 @@
 package protocol_test
 
 import (
-	"github.com/dobyte/due/v2/internal/transporter/internal/protocol"
-	"github.com/dobyte/due/v2/session"
+	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/session"
 	"testing"
 )
 

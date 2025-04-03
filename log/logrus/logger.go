@@ -8,11 +8,11 @@
 package logrus
 
 import (
-	"github.com/dobyte/due/log/logrus/v2/internal/define"
-	"github.com/dobyte/due/log/logrus/v2/internal/formatter"
-	"github.com/dobyte/due/log/logrus/v2/internal/hook"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/mode"
+	"github.com/develop-top/due/log/logrus/v2/internal/define"
+	"github.com/develop-top/due/log/logrus/v2/internal/formatter"
+	"github.com/develop-top/due/log/logrus/v2/internal/hook"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/mode"
 	"github.com/sirupsen/logrus"
 	"io"
 	"os"

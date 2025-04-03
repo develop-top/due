@@ -3,7 +3,7 @@ package rsa
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/dobyte/due/v2/errors"
+	"github.com/develop-top/due/v2/errors"
 	"math"
 )
 

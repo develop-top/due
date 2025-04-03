@@ -8,9 +8,9 @@
 package hook
 
 import (
-	"github.com/dobyte/due/log/logrus/v2/internal/define"
-	"github.com/dobyte/due/v2/core/stack"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/log/logrus/v2/internal/define"
+	"github.com/develop-top/due/v2/core/stack"
+	"github.com/develop-top/due/v2/log"
 	"github.com/sirupsen/logrus"
 )
 

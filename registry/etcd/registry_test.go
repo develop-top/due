@@ -10,10 +10,10 @@ package etcd_test
 import (
 	"context"
 	"fmt"
-	"github.com/dobyte/due/registry/etcd/v2"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/core/net"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/registry/etcd/v2"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/core/net"
+	"github.com/develop-top/due/v2/registry"
 	"testing"
 	"time"
 )

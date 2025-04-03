@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"github.com/dobyte/due/v2/network"
+	"github.com/develop-top/due/v2/network"
 	"github.com/gorilla/websocket"
 	"sync/atomic"
 )

@@ -1,9 +1,9 @@
 package client
 
 import (
-	"github.com/dobyte/due/transport/grpc/v2/internal/resolver/direct"
-	"github.com/dobyte/due/transport/grpc/v2/internal/resolver/discovery"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/transport/grpc/v2/internal/resolver/direct"
+	"github.com/develop-top/due/transport/grpc/v2/internal/resolver/discovery"
+	"github.com/develop-top/due/v2/registry"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"

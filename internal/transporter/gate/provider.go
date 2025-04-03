@@ -2,8 +2,8 @@ package gate
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/session"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/session"
 )
 
 type Provider interface {

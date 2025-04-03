@@ -8,7 +8,7 @@
 package aliyun_test
 
 import (
-	"github.com/dobyte/due/log/aliyun/v2"
+	"github.com/develop-top/due/log/aliyun/v2"
 	"testing"
 )
 

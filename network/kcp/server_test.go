@@ -1,10 +1,10 @@
 package kcp_test
 
 import (
-	"github.com/dobyte/due/network/kcp/v2"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/network"
-	"github.com/dobyte/due/v2/packet"
+	"github.com/develop-top/due/network/kcp/v2"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/packet"
 	"net/http"
 	_ "net/http/pprof"
 	"testing"

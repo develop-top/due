@@ -1,8 +1,8 @@
 package ecc
 
 import (
-	"github.com/dobyte/due/v2/etc"
-	"github.com/dobyte/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/etc"
+	"github.com/develop-top/due/v2/utils/xconv"
 )
 
 const (

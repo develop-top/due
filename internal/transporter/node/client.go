@@ -2,10 +2,10 @@ package node
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/internal/transporter/internal/client"
-	"github.com/dobyte/due/v2/internal/transporter/internal/codes"
-	"github.com/dobyte/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/internal/transporter/internal/client"
+	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
+	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"sync/atomic"
 )
 

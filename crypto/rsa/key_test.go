@@ -2,7 +2,7 @@ package rsa_test
 
 import (
 	"fmt"
-	"github.com/dobyte/due/crypto/rsa/v2"
+	"github.com/develop-top/due/crypto/rsa/v2"
 	"testing"
 )
 

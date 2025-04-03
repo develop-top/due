@@ -9,7 +9,7 @@ package xnet
 
 import (
 	"encoding/binary"
-	innernet "github.com/dobyte/due/v2/core/net"
+	innernet "github.com/develop-top/due/v2/core/net"
 	"net"
 )
 

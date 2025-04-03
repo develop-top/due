@@ -1,9 +1,9 @@
 package mode
 
 import (
-	"github.com/dobyte/due/v2/env"
-	"github.com/dobyte/due/v2/etc"
-	"github.com/dobyte/due/v2/flag"
+	"github.com/develop-top/due/v2/env"
+	"github.com/develop-top/due/v2/etc"
+	"github.com/develop-top/due/v2/flag"
 )
 
 const (

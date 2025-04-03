@@ -2,7 +2,7 @@ package memcache_test
 
 import (
 	"context"
-	"github.com/dobyte/due/lock/memcache/v2"
+	"github.com/develop-top/due/lock/memcache/v2"
 	"sync"
 	"testing"
 	"time"

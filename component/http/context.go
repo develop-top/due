@@ -2,7 +2,7 @@ package http
 
 import (
 	"bytes"
-	"github.com/dobyte/due/v2/codes"
+	"github.com/develop-top/due/v2/codes"
 	"github.com/gofiber/fiber/v3"
 	"io"
 	"net/http"

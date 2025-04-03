@@ -1,10 +1,10 @@
 package client
 
 import (
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/core/value"
-	"github.com/dobyte/due/v2/network"
-	"github.com/dobyte/due/v2/packet"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/core/value"
+	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/packet"
 	"net"
 	"sync"
 )

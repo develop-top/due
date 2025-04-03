@@ -2,10 +2,10 @@ package redis
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/lock"
-	"github.com/dobyte/due/v2/utils/xconv"
-	"github.com/dobyte/due/v2/utils/xuuid"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/lock"
+	"github.com/develop-top/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/utils/xuuid"
 	"github.com/go-redis/redis/v8"
 	"time"
 )

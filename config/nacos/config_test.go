@@ -2,8 +2,8 @@ package nacos_test
 
 import (
 	"context"
-	"github.com/dobyte/due/config/nacos/v2"
-	"github.com/dobyte/due/v2/config"
+	"github.com/develop-top/due/config/nacos/v2"
+	"github.com/develop-top/due/v2/config"
 	"testing"
 	"time"
 )

@@ -2,7 +2,7 @@ package limiter_test
 
 import (
 	"fmt"
-	"github.com/dobyte/due/v2/core/limiter"
+	"github.com/develop-top/due/v2/core/limiter"
 	"testing"
 )
 

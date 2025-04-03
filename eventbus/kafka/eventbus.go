@@ -3,7 +3,7 @@ package kafka
 import (
 	"context"
 	"github.com/IBM/sarama"
-	"github.com/dobyte/due/v2/eventbus"
+	"github.com/develop-top/due/v2/eventbus"
 	"sync"
 )
 

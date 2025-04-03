@@ -8,7 +8,7 @@
 package utils_test
 
 import (
-	"github.com/dobyte/due/log/zap/v2/internal/utils"
+	"github.com/develop-top/due/log/zap/v2/internal/utils"
 	"testing"
 )
 

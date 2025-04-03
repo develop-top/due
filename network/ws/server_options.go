@@ -1,7 +1,7 @@
 package ws
 
 import (
-	"github.com/dobyte/due/v2/etc"
+	"github.com/develop-top/due/v2/etc"
 	"net/http"
 	"time"
 )

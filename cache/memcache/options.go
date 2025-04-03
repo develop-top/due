@@ -2,7 +2,7 @@ package memcache
 
 import (
 	"github.com/bradfitz/gomemcache/memcache"
-	"github.com/dobyte/due/v2/etc"
+	"github.com/develop-top/due/v2/etc"
 	"time"
 )
 

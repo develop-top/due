@@ -8,7 +8,7 @@
 package tencent_test
 
 import (
-	"github.com/dobyte/due/log/tencent/v2"
+	"github.com/develop-top/due/log/tencent/v2"
 	"testing"
 )
 

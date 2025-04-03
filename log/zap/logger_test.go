@@ -8,8 +8,8 @@
 package zap_test
 
 import (
-	"github.com/dobyte/due/log/zap/v2"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/log/zap/v2"
+	"github.com/develop-top/due/v2/log"
 	"testing"
 )
 

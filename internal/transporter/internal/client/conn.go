@@ -1,12 +1,12 @@
 package client
 
 import (
-	"github.com/dobyte/due/v2/core/buffer"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/internal/transporter/internal/def"
-	"github.com/dobyte/due/v2/internal/transporter/internal/protocol"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/utils/xtime"
+	"github.com/develop-top/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/internal/transporter/internal/def"
+	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/utils/xtime"
 	"net"
 	"sync/atomic"
 	"time"

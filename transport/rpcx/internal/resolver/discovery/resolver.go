@@ -1,9 +1,9 @@
 package discovery
 
 import (
-	"github.com/dobyte/due/v2/core/endpoint"
-	"github.com/dobyte/due/v2/log"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/v2/core/endpoint"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/registry"
 	cli "github.com/smallnest/rpcx/client"
 	"sync"
 	"time"

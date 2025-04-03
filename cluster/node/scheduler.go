@@ -1,9 +1,9 @@
 package node
 
 import (
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/log"
 	"sync"
 )
 
@@ -69,7 +69,7 @@ func (s *Scheduler) spawn(creator Creator, opts ...ActorOption) (*Actor, error) 
 	s.mu.Unlock()
 
 	go act.dispatch()
-	
+
 	act.processor.Start()
 
 	return act, nil

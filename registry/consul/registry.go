@@ -2,9 +2,9 @@ package consul
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/encoding/json"
-	"github.com/dobyte/due/v2/registry"
-	"github.com/dobyte/due/v2/utils/xconv"
+	"github.com/develop-top/due/v2/encoding/json"
+	"github.com/develop-top/due/v2/registry"
+	"github.com/develop-top/due/v2/utils/xconv"
 	"github.com/hashicorp/consul/api"
 	"sync"
 	"time"

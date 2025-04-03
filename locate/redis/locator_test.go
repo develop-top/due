@@ -3,9 +3,9 @@ package redis_test
 import (
 	"context"
 	"fmt"
-	"github.com/dobyte/due/locate/redis/v2"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/utils/xuuid"
+	"github.com/develop-top/due/locate/redis/v2"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/utils/xuuid"
 	"testing"
 	"time"
 )

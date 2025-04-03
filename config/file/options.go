@@ -1,8 +1,8 @@
 package file
 
 import (
-	"github.com/dobyte/due/v2/config"
-	"github.com/dobyte/due/v2/etc"
+	"github.com/develop-top/due/v2/config"
+	"github.com/develop-top/due/v2/etc"
 )
 
 const (

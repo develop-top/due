@@ -1,9 +1,9 @@
 package ecc_test
 
 import (
-	"github.com/dobyte/due/crypto/ecc/v2"
-	"github.com/dobyte/due/v2/core/hash"
-	"github.com/dobyte/due/v2/utils/xrand"
+	"github.com/develop-top/due/crypto/ecc/v2"
+	"github.com/develop-top/due/v2/core/hash"
+	"github.com/develop-top/due/v2/utils/xrand"
 	"testing"
 )
 

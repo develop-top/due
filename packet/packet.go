@@ -1,6 +1,6 @@
 package packet
 
-import "github.com/dobyte/due/v2/core/buffer"
+import "github.com/develop-top/due/v2/core/buffer"
 
 var globalPacker Packer
 

@@ -10,7 +10,7 @@ package formatter
 import (
 	"bytes"
 	"fmt"
-	"github.com/dobyte/due/log/logrus/v2/internal/define"
+	"github.com/develop-top/due/log/logrus/v2/internal/define"
 	"github.com/sirupsen/logrus"
 	"path/filepath"
 	"runtime"

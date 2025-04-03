@@ -2,8 +2,8 @@ package server
 
 import (
 	"errors"
-	"github.com/dobyte/due/v2/core/endpoint"
-	xnet "github.com/dobyte/due/v2/core/net"
+	"github.com/develop-top/due/v2/core/endpoint"
+	xnet "github.com/develop-top/due/v2/core/net"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"net"

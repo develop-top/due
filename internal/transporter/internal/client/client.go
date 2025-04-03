@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/core/buffer"
-	"github.com/dobyte/due/v2/errors"
+	"github.com/develop-top/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/errors"
 	"sync"
 	"sync/atomic"
 	"time"

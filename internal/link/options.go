@@ -1,12 +1,12 @@
 package link
 
 import (
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/crypto"
-	"github.com/dobyte/due/v2/encoding"
-	"github.com/dobyte/due/v2/internal/dispatcher"
-	"github.com/dobyte/due/v2/locate"
-	"github.com/dobyte/due/v2/registry"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/crypto"
+	"github.com/develop-top/due/v2/encoding"
+	"github.com/develop-top/due/v2/internal/dispatcher"
+	"github.com/develop-top/due/v2/locate"
+	"github.com/develop-top/due/v2/registry"
 )
 
 type Options struct {

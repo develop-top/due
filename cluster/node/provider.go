@@ -2,9 +2,9 @@ package node
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/errors"
-	"github.com/dobyte/due/v2/packet"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/packet"
 )
 
 type provider struct {

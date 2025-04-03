@@ -2,7 +2,7 @@ package xcall_test
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/utils/xcall"
+	"github.com/develop-top/due/v2/utils/xcall"
 	"testing"
 	"time"
 )

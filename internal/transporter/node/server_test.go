@@ -3,9 +3,9 @@ package node_test
 import (
 	"context"
 	"fmt"
-	"github.com/dobyte/due/v2/cluster"
-	"github.com/dobyte/due/v2/internal/transporter/node"
-	"github.com/dobyte/due/v2/log"
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/internal/transporter/node"
+	"github.com/develop-top/due/v2/log"
 	"testing"
 	"time"
 )

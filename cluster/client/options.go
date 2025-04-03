@@ -2,11 +2,11 @@ package client
 
 import (
 	"context"
-	"github.com/dobyte/due/v2/crypto"
-	"github.com/dobyte/due/v2/encoding"
-	"github.com/dobyte/due/v2/etc"
-	"github.com/dobyte/due/v2/network"
-	"github.com/dobyte/due/v2/utils/xuuid"
+	"github.com/develop-top/due/v2/crypto"
+	"github.com/develop-top/due/v2/encoding"
+	"github.com/develop-top/due/v2/etc"
+	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/utils/xuuid"
 	"time"
 )
 
