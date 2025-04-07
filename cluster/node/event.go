@@ -103,13 +103,17 @@ func (e *event) compareVersionExecDefer(version int32) {
 
 // Clone 克隆Context
 func (e *event) Clone() Context {
-	return &event{
+	c := &event{
 		node: e.node,
 		gid:  e.gid,
 		cid:  e.cid,
 		uid:  e.uid,
 		ctx:  context.Background(),
 	}
+
+	c.actor.Store(e.actor.Load())
+
+	return c
 }
 
 // Task 投递任务
@@ -146,6 +150,16 @@ func (e *event) Proxy() *Proxy {
 // Context 获取上下文
 func (e *event) Context() context.Context {
 	return e.ctx
+}
+
+// SetValue 为上下文设置值
+func (e *event) SetValue(key, val any) {
+	e.ctx = context.WithValue(e.ctx, key, val)
+}
+
+// GetValue 获取上下文中的值
+func (e *event) GetValue(key any) any {
+	return e.ctx.Value(key)
 }
 
 // BindGate 绑定网关
