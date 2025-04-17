@@ -210,7 +210,7 @@ func (s *Scheduler) dispatchRequest(ctx Context) error {
 	uid := ctx.UID()
 
 	if uid == 0 {
-		return errors.ErrMissDispatchStrategy
+		return errors.ErrMissingDispatchStrategy
 	}
 
 	kind, ok := s.routes.Load(ctx.Route())

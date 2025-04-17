@@ -1,4 +1,4 @@
-package discovery
+package direct
 
 import (
 	"github.com/develop-top/due/v2/log"
