@@ -220,6 +220,7 @@ func parseInstances(instances []model.Instance) ([]*registry.ServiceInstance, er
 		ins.Routes = make([]registry.Route, 0)
 		ins.Events = make([]int, 0)
 		ins.Services = make([]string, 0)
+		ins.Metadata = make(map[string]string, 0)
 		ins.Weight = xconv.Int(instance.Metadata[metaFieldWeight])
 
 		if v := instance.Metadata[metaFieldRoutes]; v != "" {
@@ -236,6 +237,12 @@ func parseInstances(instances []model.Instance) ([]*registry.ServiceInstance, er
 
 		if v := instance.Metadata[metaFieldServices]; v != "" {
 			if err := json.Unmarshal([]byte(v), &ins.Services); err != nil {
+				return nil, err
+			}
+		}
+
+		if v := instance.Metadata[metaFieldMetadata]; v != "" {
+			if err := json.Unmarshal([]byte(v), &ins.Metadata); err != nil {
 				return nil, err
 			}
 		}

@@ -165,6 +165,10 @@ func (r *Registry) services(ctx context.Context, serviceName string, waitIndex u
 				}
 			case metaFieldEndpoint:
 				ins.Endpoint = v
+			case metaFieldMetadata:
+				if err = json.Unmarshal([]byte(v), &ins.Metadata); err != nil {
+					continue
+				}
 			}
 		}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/develop-top/due/v2/locate"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/transport"
+	"github.com/develop-top/due/v2/utils/xconv"
 	"github.com/develop-top/due/v2/utils/xuuid"
 	"time"
 )
@@ -27,6 +28,7 @@ const (
 	defaultCodecKey   = "etc.cluster.node.codec"
 	defaultTimeoutKey = "etc.cluster.node.timeout"
 	defaultWeightKey  = "etc.cluster.node.weight"
+	defaultMetadata   = "etc.cluster.node.metadata"
 )
 
 // SchedulingModel 调度模型
@@ -46,16 +48,18 @@ type options struct {
 	encryptor   crypto.Encryptor      // 消息加密器
 	transporter transport.Transporter // 消息传输器
 	weight      int                   // 权重
+	metadata    map[string]string     // 元数据
 }
 
 func defaultOptions() *options {
 	opts := &options{
-		ctx:     context.Background(),
-		name:    defaultName,
-		addr:    defaultAddr,
-		codec:   encoding.Invoke(defaultCodec),
-		timeout: defaultTimeout,
-		weight:  defaultWeight,
+		ctx:      context.Background(),
+		name:     defaultName,
+		addr:     defaultAddr,
+		codec:    encoding.Invoke(defaultCodec),
+		timeout:  defaultTimeout,
+		weight:   defaultWeight,
+		metadata: map[string]string{},
 	}
 
 	if id := etc.Get(defaultIDKey).String(); id != "" {
@@ -84,6 +88,11 @@ func defaultOptions() *options {
 		opts.weight = weight
 	}
 
+	if md := etc.Get(defaultMetadata).Map(); md != nil {
+		for k, v := range md {
+			opts.metadata[k] = xconv.String(v)
+		}
+	}
 	return opts
 }
 
@@ -140,4 +149,9 @@ func WithTransporter(transporter transport.Transporter) Option {
 // WithWeight 设置权重
 func WithWeight(weight int) Option {
 	return func(o *options) { o.weight = weight }
+}
+
+// WithMetadata 设置元数据
+func WithMetadata(md map[string]string) Option {
+	return func(o *options) { o.metadata = md }
 }

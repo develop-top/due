@@ -212,6 +212,7 @@ func (g *Gate) registerServiceInstance() {
 		State:    g.getState().String(),
 		Weight:   g.opts.weight,
 		Endpoint: g.linker.Endpoint().String(),
+		Metadata: g.opts.metadata,
 	}
 
 	ctx, cancel := context.WithTimeout(g.ctx, defaultTimeout)

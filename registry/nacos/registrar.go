@@ -23,6 +23,7 @@ const (
 	metaFieldWeight   = "weight"
 	metaFieldServices = "services"
 	metaFieldEndpoint = "endpoint"
+	metaFieldMetadata = "metadata"
 )
 
 type registrar struct {
@@ -55,6 +56,11 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 		return err
 	}
 
+	metas, err := json.Marshal(ins.Metadata)
+	if err != nil {
+		return err
+	}
+
 	param := vo.RegisterInstanceParam{
 		Ip:          host,
 		Port:        port,
@@ -76,6 +82,7 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 			metaFieldServices: string(services),
 			metaFieldEndpoint: ins.Endpoint,
 			metaFieldWeight:   xconv.String(ins.Weight),
+			metaFieldMetadata: string(metas),
 		},
 	}
 

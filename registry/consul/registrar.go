@@ -25,6 +25,7 @@ const (
 	metaFieldWeight   = "weight"
 	metaFieldServices = "services"
 	metaFieldEndpoint = "endpoint"
+	metaFieldMetadata = "metadata"
 )
 
 type registrar struct {
@@ -81,6 +82,7 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 	registration.Meta[metaFieldEvents] = xconv.Json(ins.Events)
 	registration.Meta[metaFieldWeight] = xconv.String(ins.Weight)
 	registration.Meta[metaFieldServices] = xconv.Json(ins.Services)
+	registration.Meta[metaFieldMetadata] = xconv.Json(ins.Metadata)
 
 	for field, value := range marshalMetaRoutes(ins.Routes) {
 		registration.Meta[field] = value

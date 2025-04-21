@@ -165,6 +165,7 @@ func (m *Mesh) registerServiceInstance() {
 		Alias:    m.opts.name,
 		State:    m.getState().String(),
 		Weight:   m.opts.weight,
+		Metadata: m.opts.metadata,
 		Endpoint: m.transporter.Endpoint().String(),
 		Services: make([]string, 0, len(m.services)),
 	}
