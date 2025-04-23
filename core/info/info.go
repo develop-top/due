@@ -25,7 +25,7 @@ const (
 	leftBottomBorder  = "└"
 	rightBottomBorder = "┘"
 	website           = "https://github.com/develop-top/due"
-	version           = "v2.2.5"
+	version           = "v2.2.7"
 	global            = "Global"
 )
 
