@@ -103,6 +103,7 @@ func (c *Conn) read() {
 		case <-c.ctx.Done():
 			return
 		default:
+			//todo解析链路追踪信息
 			isHeartbeat, route, _, data, err := protocol.ReadMessage(conn)
 			if err != nil {
 				_ = c.close(true)

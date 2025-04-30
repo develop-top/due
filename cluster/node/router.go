@@ -173,6 +173,9 @@ func (r *Router) handle(req *request) {
 		return
 	}
 
+	// 链路追踪
+	xcall.Call(func() { r.node.preTraceHandler(req) })
+
 	if r.preRouteHandler != nil {
 		xcall.Call(func() { r.preRouteHandler(req) })
 	}

@@ -192,6 +192,11 @@ func (r *request) Context() context.Context {
 	return r.ctx
 }
 
+// SetContext 设置上下文
+func (r *request) SetContext(c context.Context) {
+	r.ctx = c
+}
+
 // SetValue 为上下文设置值
 func (r *request) SetValue(key, val any) {
 	r.ctx = context.WithValue(r.ctx, key, val)
@@ -424,6 +429,8 @@ func (r *request) compareVersionRecycle(version int32) {
 	if r.version.CompareAndSwap(version, 0) {
 		if r.node.router.postRouteHandler != nil {
 			xcall.Call(func() { r.node.router.postRouteHandler(r) })
+			// 链路追踪
+			xcall.Call(func() { r.node.postTraceHandler(r) })
 		}
 
 		r.reset()
@@ -441,4 +448,6 @@ func (r *request) reset() {
 		r.chain.Cancel()
 		r.chain = nil
 	}
+
+	r.ctx = context.Background()
 }

@@ -9,8 +9,10 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/node"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/registry"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/transport"
 	"github.com/develop-top/due/v2/utils/xcall"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"sync/atomic"
@@ -26,24 +28,26 @@ type serviceEntity struct {
 
 type Node struct {
 	component.Base
-	opts        *options
-	ctx         context.Context
-	cancel      context.CancelFunc
-	state       atomic.Int32
-	evtPool     *sync.Pool
-	reqPool     *sync.Pool
-	router      *Router
-	trigger     *Trigger
-	proxy       *Proxy
-	services    []*serviceEntity
-	instances   []*registry.ServiceInstance
-	linker      *node.Server
-	fnChan      chan func()
-	scheduler   *Scheduler
-	transporter transport.Server
-	wg          *sync.WaitGroup
-	rw          sync.RWMutex
-	hooks       map[cluster.Hook][]HookHandler
+	opts             *options
+	ctx              context.Context
+	cancel           context.CancelFunc
+	state            atomic.Int32
+	evtPool          *sync.Pool
+	reqPool          *sync.Pool
+	router           *Router
+	trigger          *Trigger
+	proxy            *Proxy
+	services         []*serviceEntity
+	instances        []*registry.ServiceInstance
+	linker           *node.Server
+	fnChan           chan func()
+	scheduler        *Scheduler
+	transporter      transport.Server
+	wg               *sync.WaitGroup
+	rw               sync.RWMutex
+	hooks            map[cluster.Hook][]HookHandler
+	preTraceHandler  RouteHandler
+	postTraceHandler RouteHandler
 }
 
 func NewNode(opts ...Option) *Node {
@@ -82,6 +86,24 @@ func NewNode(opts ...Option) *Node {
 
 		return req
 	}}
+	n.preTraceHandler = func(req Context) {
+		ctx := req.Context()
+		tr := tracer.TracerFromContext(ctx)
+		spanCtx, span := tr.Start(ctx, "routerHandler",
+			trace.WithSpanKind(trace.SpanKindInternal),
+			trace.WithAttributes(
+				tracer.RPCMessageIDKey.Int64(int64(req.Route())),
+				tracer.RPCMessageTypeKey.String(o.codec.Name()),
+			))
+		req.SetContext(spanCtx)
+		req.SetValue(SpanKey, span)
+	}
+	n.postTraceHandler = func(req Context) {
+		val := req.GetValue(SpanKey)
+		if val != nil {
+			val.(trace.Span).End()
+		}
+	}
 
 	return n
 }

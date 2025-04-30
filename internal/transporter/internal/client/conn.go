@@ -182,6 +182,7 @@ func (c *Conn) write(conn net.Conn) {
 				c.pending.store(ch.seq, ch.call)
 			}
 
+			//todo携带链路追踪信息
 			ch.buf.Range(func(node *buffer.NocopyNode) bool {
 				if _, err := conn.Write(node.Bytes()); err != nil {
 					return false

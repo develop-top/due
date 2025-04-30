@@ -44,6 +44,8 @@ type Context interface {
 	Proxy() *Proxy
 	// Context 获取上下文
 	Context() context.Context
+	// SetContext 设置上下文
+	SetContext(ctx context.Context)
 	// SetValue 为上下文设置值
 	SetValue(key, val any)
 	// GetValue 获取上下文中的值
@@ -114,4 +116,8 @@ type Kind int
 const (
 	Event   Kind = iota // 事件
 	Request             // 请求
+)
+
+const (
+	SpanKey = "_span"
 )

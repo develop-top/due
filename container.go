@@ -10,6 +10,7 @@ import (
 	"github.com/develop-top/due/v2/lock"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/task"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"github.com/develop-top/due/v2/utils/xfile"
 	"os"
@@ -127,6 +128,8 @@ func (c *Container) doClearModules() {
 	config.Close()
 
 	etc.Close()
+
+	tracer.StopAgent()
 
 	log.Close()
 }

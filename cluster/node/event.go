@@ -154,6 +154,11 @@ func (e *event) Context() context.Context {
 	return e.ctx
 }
 
+// SetContext 设置上下文
+func (e *event) SetContext(c context.Context) {
+	e.ctx = c
+}
+
 // SetValue 为上下文设置值
 func (e *event) SetValue(key, val any) {
 	e.ctx = context.WithValue(e.ctx, key, val)
@@ -364,4 +369,5 @@ func (e *event) reset() {
 	}
 
 	e.actor.Store((*Actor)(nil))
+	e.ctx = context.Background()
 }
