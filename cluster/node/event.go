@@ -369,5 +369,4 @@ func (e *event) reset() {
 	}
 
 	e.actor.Store((*Actor)(nil))
-	e.ctx = context.Background()
 }

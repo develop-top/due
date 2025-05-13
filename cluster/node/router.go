@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xcall"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type RouteHandler func(ctx Context)
@@ -16,6 +18,8 @@ type Router struct {
 	preRouteHandler     RouteHandler
 	postRouteHandler    RouteHandler
 	defaultRouteHandler RouteHandler
+	preTraceHandler     RouteHandler // handler链路追踪
+	postTraceHandler    RouteHandler // handler链路追踪
 }
 
 type routeEntity struct {
@@ -52,6 +56,24 @@ func newRouter(node *Node) *Router {
 		node:    node,
 		routes:  make(map[int32]*routeEntity),
 		reqChan: make(chan *request, 10240),
+		preTraceHandler: func(req Context) {
+			ctx := req.Context()
+			tr := tracer.FromContext(ctx)
+			spanCtx, span := tr.Start(ctx, "routerHandler",
+				trace.WithSpanKind(trace.SpanKindInternal),
+				trace.WithAttributes(
+					tracer.RPCMessageIDKey.Int64(int64(req.Route())),
+					tracer.RPCMessageTypeKey.String(node.opts.codec.Name()),
+				))
+			req.SetContext(spanCtx)
+			req.SetValue(SpanRouteHandleKey, span)
+		},
+		postTraceHandler: func(req Context) {
+			val := req.GetValue(SpanRouteHandleKey)
+			if val != nil {
+				val.(trace.Span).End()
+			}
+		},
 	}
 }
 
@@ -176,8 +198,8 @@ func (r *Router) handle(req *request) {
 	}
 
 	// 链路追踪
-	if r.node.preTraceHandler != nil {
-		xcall.Call(func() { r.node.preTraceHandler(req) })
+	if r.preTraceHandler != nil {
+		xcall.Call(func() { r.preTraceHandler(req) })
 	}
 
 	if r.preRouteHandler != nil {

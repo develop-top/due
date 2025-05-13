@@ -114,7 +114,7 @@ func TestParseFullMethod(t *testing.T) {
 }
 
 func TestSpanInfo(t *testing.T) {
-	val, kvs := SpanInfo("/fullMethod", "remote")
+	val, kvs := SpanInfo("/fullMethod", "remote", RPCSystemGRPC)
 	assert.Equal(t, "fullMethod", val)
 	assert.NotEmpty(t, kvs)
 }
@@ -162,7 +162,7 @@ func TestTracerFromContext(t *testing.T) {
 		assert.Equal(t, spanContext.IsValid(), hasTraceId)
 		parentTraceId := spanContext.TraceID().String()
 
-		tracer := TracerFromContext(ctx)
+		tracer := FromContext(ctx)
 		_, span := tracer.Start(ctx, "b")
 		defer span.End()
 

@@ -431,8 +431,8 @@ func (r *request) compareVersionRecycle(version int32) {
 			xcall.Call(func() { r.node.router.postRouteHandler(r) })
 		}
 		// 链路追踪
-		if r.node.postTraceHandler != nil {
-			xcall.Call(func() { r.node.postTraceHandler(r) })
+		if r.node.router.postTraceHandler != nil {
+			xcall.Call(func() { r.node.router.postTraceHandler(r) })
 		}
 
 		r.reset()
@@ -450,6 +450,4 @@ func (r *request) reset() {
 		r.chain.Cancel()
 		r.chain = nil
 	}
-
-	r.ctx = context.Background()
 }

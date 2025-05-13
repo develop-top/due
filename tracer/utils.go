@@ -69,8 +69,8 @@ func SpanInfo(fullMethod, peerAddress string, attrs ...attribute.KeyValue) (stri
 	return name, attrs
 }
 
-// TracerFromContext returns a tracer in ctx, otherwise returns a global tracer.
-func TracerFromContext(ctx context.Context) (tracer trace.Tracer) {
+// FromContext returns a tracer in ctx, otherwise returns a global tracer.
+func FromContext(ctx context.Context) (tracer trace.Tracer) {
 	if span := trace.SpanFromContext(ctx); span.SpanContext().IsValid() {
 		tracer = span.TracerProvider().Tracer(TraceName)
 	} else {

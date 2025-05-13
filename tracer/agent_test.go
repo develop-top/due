@@ -17,25 +17,25 @@ func TestStartAgent(t *testing.T) {
 		endpoint71 = "/tmp/trace.log"
 		endpoint72 = "/not-exist-fs/trace.log"
 	)
-	c1 := Options{
+	c1 := &Options{
 		Name: "foo",
 	}
-	c2 := Options{
+	c2 := &Options{
 		Name:     "bar",
 		Endpoint: endpoint1,
 		Batcher:  kindJaeger,
 	}
-	c3 := Options{
+	c3 := &Options{
 		Name:     "any",
 		Endpoint: endpoint2,
 		Batcher:  kindZipkin,
 	}
-	c4 := Options{
+	c4 := &Options{
 		Name:     "bla",
 		Endpoint: endpoint3,
 		Batcher:  "otlp",
 	}
-	c5 := Options{
+	c5 := &Options{
 		Name:     "otlpgrpc",
 		Endpoint: endpoint3,
 		Batcher:  kindOtlpGrpc,
@@ -43,7 +43,7 @@ func TestStartAgent(t *testing.T) {
 			"uptrace-dsn": "http://project2_secret_token@localhost:14317/2",
 		},
 	}
-	c6 := Options{
+	c6 := &Options{
 		Name:     "otlphttp",
 		Endpoint: endpoint4,
 		Batcher:  kindOtlpHttp,
@@ -52,22 +52,22 @@ func TestStartAgent(t *testing.T) {
 		},
 		OtlpHttpPath: "/v1/traces",
 	}
-	c7 := Options{
+	c7 := &Options{
 		Name:     "UDP",
 		Endpoint: endpoint5,
 		Batcher:  kindJaeger,
 	}
-	c8 := Options{
+	c8 := &Options{
 		Disabled: true,
 		Endpoint: endpoint6,
 		Batcher:  kindJaeger,
 	}
-	c9 := Options{
+	c9 := &Options{
 		Name:     "file",
 		Endpoint: endpoint71,
 		Batcher:  kindFile,
 	}
-	c10 := Options{
+	c10 := &Options{
 		Name:     "file",
 		Endpoint: endpoint72,
 		Batcher:  kindFile,

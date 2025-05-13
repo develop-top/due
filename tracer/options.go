@@ -16,6 +16,7 @@ const (
 	defaultEndpointKey  = "etc.opentracing.endpoint"
 	defaultSamplerKey   = "etc.opentracing.sampler"
 	defaultBatcherKey   = "etc.opentracing.batcher"
+	defaultDisableKey   = "etc.opentracing.disable"
 )
 
 var TraceName = "due" // 系统名称
@@ -49,6 +50,7 @@ func defaultOptions() *Options {
 		Endpoint:  etc.Get(defaultEndpointKey, defaultEndpoint).String(),
 		Sampler:   etc.Get(defaultSamplerKey, defaultSampler).Float64(),
 		Batcher:   etc.Get(defaultBatcherKey, defaultBatcher).String(),
+		Disabled:  etc.Get(defaultDisableKey, true).Bool(), // 默认禁用
 	}
 }
 
