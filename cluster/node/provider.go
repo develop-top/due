@@ -13,7 +13,7 @@ type provider struct {
 
 // Trigger 触发事件
 func (p *provider) Trigger(ctx context.Context, gid string, cid, uid int64, event cluster.Event) error {
-	p.node.trigger.trigger(event, gid, cid, uid)
+	p.node.trigger.trigger(ctx, event, gid, cid, uid)
 
 	return nil
 }
@@ -47,7 +47,7 @@ func (p *provider) Deliver(ctx context.Context, gid, nid string, cid, uid int64,
 		}
 	}
 
-	p.node.router.deliver(gid, nid, "", cid, uid, msg.Seq, msg.Route, msg.Buffer)
+	p.node.router.deliver(ctx, gid, nid, "", cid, uid, msg.Seq, msg.Route, msg.Buffer)
 
 	return nil
 }

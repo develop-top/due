@@ -79,3 +79,7 @@ func FromContext(ctx context.Context) (tracer trace.Tracer) {
 
 	return
 }
+
+func NewSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (context.Context, trace.Span) {
+	return FromContext(ctx).Start(ctx, name, opts...)
+}

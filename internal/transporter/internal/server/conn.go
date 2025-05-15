@@ -9,6 +9,8 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/utils/xtime"
+	"github.com/develop-top/due/v2/utils/xtrace"
+	"go.opentelemetry.io/otel/trace"
 	"net"
 	"sync"
 	"sync/atomic"
@@ -103,8 +105,7 @@ func (c *Conn) read() {
 		case <-c.ctx.Done():
 			return
 		default:
-			//todo解析链路追踪信息
-			isHeartbeat, route, _, data, err := protocol.ReadMessage(conn)
+			isHeartbeat, route, _, data, traceCtx, err := protocol.ReadTraceMessage(conn)
 			if err != nil {
 				_ = c.close(true)
 				return
@@ -121,6 +122,7 @@ func (c *Conn) read() {
 				isHeartbeat: isHeartbeat,
 				route:       route,
 				data:        data,
+				trace:       traceCtx,
 			}
 
 			c.rw.RUnlock()
@@ -158,9 +160,12 @@ func (c *Conn) process() {
 					continue
 				}
 
-				if err := handler(c, ch.data); err != nil && !errors.Is(err, errors.ErrNotFoundUserLocation) {
+				ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
+				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer")
+				if err := handler(ctx, c, ch.data); err != nil && !errors.Is(err, errors.ErrNotFoundUserLocation) {
 					log.Warnf("process route %d message failed: %v", ch.route, err)
 				}
+				span.End()
 			}
 		}
 	}

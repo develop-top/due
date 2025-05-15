@@ -7,6 +7,7 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/utils/xtime"
+	"github.com/develop-top/due/v2/utils/xtrace"
 	"net"
 	"sync/atomic"
 	"time"
@@ -182,7 +183,9 @@ func (c *Conn) write(conn net.Conn) {
 				c.pending.store(ch.seq, ch.call)
 			}
 
-			//todo携带链路追踪信息
+			// 携带链路追踪信息
+			ctx, span := xtrace.StartRPCClientSpan(ch.ctx, "internal.RPCClient")
+			ch.buf = protocol.EncodeTraceBuffer(ctx, ch.buf)
 			ch.buf.Range(func(node *buffer.NocopyNode) bool {
 				if _, err := conn.Write(node.Bytes()); err != nil {
 					return false
@@ -190,6 +193,7 @@ func (c *Conn) write(conn net.Conn) {
 					return true
 				}
 			})
+			span.End()
 
 			ch.buf.Release()
 		}

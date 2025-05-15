@@ -57,13 +57,16 @@ func newRouter(node *Node) *Router {
 		routes:  make(map[int32]*routeEntity),
 		reqChan: make(chan *request, 10240),
 		preTraceHandler: func(req Context) {
-			ctx := req.Context()
-			tr := tracer.FromContext(ctx)
-			spanCtx, span := tr.Start(ctx, "routerHandler",
+			spanCtx, span := tracer.NewSpan(req.Context(), "routerHandler",
 				trace.WithSpanKind(trace.SpanKindInternal),
 				trace.WithAttributes(
 					tracer.RPCMessageIDKey.Int64(int64(req.Route())),
 					tracer.RPCMessageTypeKey.String(node.opts.codec.Name()),
+					tracer.GateID.String(req.GID()),
+					tracer.UserCID.Int64(req.CID()),
+					tracer.UserUID.Int64(req.UID()),
+					tracer.NodeID.String(node.opts.id),
+					tracer.ServerIP.String(node.linker.ExposeAddr()),
 				))
 			req.SetContext(spanCtx)
 			req.SetValue(SpanRouteHandleKey, span)
@@ -165,9 +168,9 @@ func (r *Router) Group(groups ...func(group *RouterGroup)) *RouterGroup {
 	return group
 }
 
-func (r *Router) deliver(gid, nid, pid string, cid, uid int64, seq, route int32, data interface{}) {
+func (r *Router) deliver(ctx context.Context, gid, nid, pid string, cid, uid int64, seq, route int32, data interface{}) {
 	req := r.node.reqPool.Get().(*request)
-	req.ctx = context.Background()
+	req.ctx = ctx
 	req.gid = gid
 	req.nid = nid
 	req.pid = pid

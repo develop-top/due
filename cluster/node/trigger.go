@@ -23,9 +23,9 @@ func newTrigger(node *Node) *Trigger {
 	}
 }
 
-func (e *Trigger) trigger(kind cluster.Event, gid string, cid, uid int64) {
+func (e *Trigger) trigger(ctx context.Context, kind cluster.Event, gid string, cid, uid int64) {
 	evt := e.node.evtPool.Get().(*event)
-	evt.ctx = context.Background()
+	evt.ctx = ctx
 	evt.event = kind
 	evt.gid = gid
 	evt.cid = cid
