@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"github.com/develop-top/due/v2/core/endpoint"
 	xnet "github.com/develop-top/due/v2/core/net"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
@@ -142,7 +143,7 @@ func (s *Server) recycle(conn net.Conn) {
 }
 
 // 处理握手
-func (s *Server) handshake(conn *Conn, data []byte) error {
+func (s *Server) handshake(ctx context.Context, conn *Conn, data []byte) error {
 	seq, insKind, insID, err := protocol.DecodeHandshakeReq(data)
 	if err != nil {
 		return err

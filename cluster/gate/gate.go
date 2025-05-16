@@ -19,6 +19,8 @@ import (
 	"github.com/develop-top/due/v2/network"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/session"
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/trace"
 	"sync"
 	"sync/atomic"
 )
@@ -149,6 +151,19 @@ func (g *Gate) handleConnect(conn network.Conn) {
 	cid, uid := conn.ID(), conn.UID()
 
 	ctx, cancel := context.WithTimeout(g.ctx, g.opts.timeout)
+
+	// 链路追踪
+	ctx, span := tracer.NewSpan(ctx, "handleConnect",
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(
+			tracer.UserCID.Int64(cid),
+			tracer.UserUID.Int64(uid),
+			tracer.GateID.String(g.opts.id),
+			tracer.ServerIP.String(g.linker.ExposeAddr()),
+		))
+	defer span.End()
+	// 链路追踪
+
 	g.proxy.trigger(ctx, cluster.Connect, cid, uid)
 	cancel()
 }
@@ -159,11 +174,37 @@ func (g *Gate) handleDisconnect(conn network.Conn) {
 
 	if cid, uid := conn.ID(), conn.UID(); uid != 0 {
 		ctx, cancel := context.WithTimeout(g.ctx, g.opts.timeout)
+
+		// 链路追踪
+		ctx, span := tracer.NewSpan(ctx, "handleDisconnect",
+			trace.WithSpanKind(trace.SpanKindInternal),
+			trace.WithAttributes(
+				tracer.UserCID.Int64(cid),
+				tracer.UserUID.Int64(uid),
+				tracer.GateID.String(g.opts.id),
+				tracer.ServerIP.String(g.linker.ExposeAddr()),
+			))
+		defer span.End()
+		// 链路追踪
+
 		_ = g.proxy.unbindGate(ctx, cid, uid)
 		g.proxy.trigger(ctx, cluster.Disconnect, cid, uid)
 		cancel()
 	} else {
 		ctx, cancel := context.WithTimeout(g.ctx, g.opts.timeout)
+
+		// 链路追踪
+		ctx, span := tracer.NewSpan(ctx, "handleDisconnect",
+			trace.WithSpanKind(trace.SpanKindInternal),
+			trace.WithAttributes(
+				tracer.UserCID.Int64(cid),
+				tracer.UserUID.Int64(uid),
+				tracer.GateID.String(g.opts.id),
+				tracer.ServerIP.String(g.linker.ExposeAddr()),
+			))
+		defer span.End()
+		// 链路追踪
+
 		g.proxy.trigger(ctx, cluster.Disconnect, cid, uid)
 		cancel()
 	}
@@ -175,6 +216,19 @@ func (g *Gate) handleDisconnect(conn network.Conn) {
 func (g *Gate) handleReceive(conn network.Conn, data []byte) {
 	cid, uid := conn.ID(), conn.UID()
 	ctx, cancel := context.WithTimeout(g.ctx, g.opts.timeout)
+
+	// 链路追踪
+	ctx, span := tracer.NewSpan(ctx, "handleReceive",
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(
+			tracer.UserCID.Int64(cid),
+			tracer.UserUID.Int64(uid),
+			tracer.GateID.String(g.opts.id),
+			tracer.ServerIP.String(g.linker.ExposeAddr()),
+		))
+	defer span.End()
+	// 链路追踪
+
 	g.proxy.deliver(ctx, cid, uid, data)
 	cancel()
 }

@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/utils/xcall"
@@ -22,8 +23,9 @@ func newTrigger(node *Node) *Trigger {
 	}
 }
 
-func (e *Trigger) trigger(kind cluster.Event, gid string, cid, uid int64) {
+func (e *Trigger) trigger(ctx context.Context, kind cluster.Event, gid string, cid, uid int64) {
 	evt := e.node.evtPool.Get().(*event)
+	evt.ctx = ctx
 	evt.event = kind
 	evt.gid = gid
 	evt.cid = cid

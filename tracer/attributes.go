@@ -26,7 +26,7 @@ const (
 	HttpRequestHeaderKey = attribute.Key("http.request.header")
 	// HttpRequestBodyKey is the body of http request.
 	HttpRequestBodyKey = attribute.Key("http.request.body")
-	// HttpRequestBodyKey is the body of http request.
+	// HttpResponseKey is http response.
 	HttpResponseKey = attribute.Key("http.response")
 )
 
@@ -48,3 +48,11 @@ var (
 func StatusCodeAttr(c gcodes.Code) attribute.KeyValue {
 	return GRPCStatusCodeKey.Int64(int64(c))
 }
+
+const (
+	UserCID  = attribute.Key("user.cid")
+	UserUID  = attribute.Key("user.uid")
+	GateID   = attribute.Key("gate.id")
+	NodeID   = attribute.Key("node.id")
+	ServerIP = attribute.Key("server.ip")
+)

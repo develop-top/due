@@ -45,6 +45,8 @@ func NewRegistry(opts ...Option) *Registry {
 		o.client, r.err = clientv3.New(clientv3.Config{
 			Endpoints:   o.addrs,
 			DialTimeout: o.dialTimeout,
+			Username:    o.username,
+			Password:    o.password,
 		})
 	}
 

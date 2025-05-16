@@ -1,9 +1,12 @@
 package node
 
 import (
+	"context"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xcall"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type RouteHandler func(ctx Context)
@@ -15,6 +18,8 @@ type Router struct {
 	preRouteHandler     RouteHandler
 	postRouteHandler    RouteHandler
 	defaultRouteHandler RouteHandler
+	preTraceHandler     RouteHandler // handler链路追踪
+	postTraceHandler    RouteHandler // handler链路追踪
 }
 
 type routeEntity struct {
@@ -51,6 +56,27 @@ func newRouter(node *Node) *Router {
 		node:    node,
 		routes:  make(map[int32]*routeEntity),
 		reqChan: make(chan *request, 10240),
+		preTraceHandler: func(req Context) {
+			spanCtx, span := tracer.NewSpan(req.Context(), "routerHandler",
+				trace.WithSpanKind(trace.SpanKindInternal),
+				trace.WithAttributes(
+					tracer.RPCMessageIDKey.Int64(int64(req.Route())),
+					tracer.RPCMessageTypeKey.String(node.opts.codec.Name()),
+					tracer.GateID.String(req.GID()),
+					tracer.UserCID.Int64(req.CID()),
+					tracer.UserUID.Int64(req.UID()),
+					tracer.NodeID.String(node.opts.id),
+					tracer.ServerIP.String(node.linker.ExposeAddr()),
+				))
+			req.SetContext(spanCtx)
+			req.SetValue(SpanRouteHandleKey, span)
+		},
+		postTraceHandler: func(req Context) {
+			val := req.GetValue(SpanRouteHandleKey)
+			if val != nil {
+				val.(trace.Span).End()
+			}
+		},
 	}
 }
 
@@ -142,8 +168,9 @@ func (r *Router) Group(groups ...func(group *RouterGroup)) *RouterGroup {
 	return group
 }
 
-func (r *Router) deliver(gid, nid, pid string, cid, uid int64, seq, route int32, data interface{}) {
+func (r *Router) deliver(ctx context.Context, gid, nid, pid string, cid, uid int64, seq, route int32, data interface{}) {
 	req := r.node.reqPool.Get().(*request)
+	req.ctx = ctx
 	req.gid = gid
 	req.nid = nid
 	req.pid = pid
@@ -174,7 +201,9 @@ func (r *Router) handle(req *request) {
 	}
 
 	// 链路追踪
-	xcall.Call(func() { r.node.preTraceHandler(req) })
+	if r.preTraceHandler != nil {
+		xcall.Call(func() { r.preTraceHandler(req) })
+	}
 
 	if r.preRouteHandler != nil {
 		xcall.Call(func() { r.preRouteHandler(req) })

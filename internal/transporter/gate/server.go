@@ -38,13 +38,13 @@ func (s *Server) init() {
 }
 
 // 绑定用户
-func (s *Server) bind(conn *server.Conn, data []byte) error {
+func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, cid, uid, err := protocol.DecodeBindReq(data)
 	if err != nil {
 		return err
 	}
 
-	if err = s.provider.Bind(context.Background(), cid, uid); seq == 0 {
+	if err = s.provider.Bind(ctx, cid, uid); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeBindRes(seq, codes.ErrorToCode(err)))
@@ -52,13 +52,13 @@ func (s *Server) bind(conn *server.Conn, data []byte) error {
 }
 
 // 解绑用户
-func (s *Server) unbind(conn *server.Conn, data []byte) error {
+func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, uid, err := protocol.DecodeUnbindReq(data)
 	if err != nil {
 		return err
 	}
 
-	if err = s.provider.Unbind(context.Background(), uid); seq == 0 {
+	if err = s.provider.Unbind(ctx, uid); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeUnbindRes(seq, codes.ErrorToCode(err)))
@@ -66,13 +66,13 @@ func (s *Server) unbind(conn *server.Conn, data []byte) error {
 }
 
 // 获取IP地址
-func (s *Server) getIP(conn *server.Conn, data []byte) error {
+func (s *Server) getIP(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, target, err := protocol.DecodeGetIPReq(data)
 	if err != nil {
 		return err
 	}
 
-	if ip, err := s.provider.GetIP(context.Background(), kind, target); seq == 0 {
+	if ip, err := s.provider.GetIP(ctx, kind, target); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeGetIPRes(seq, codes.ErrorToCode(err), ip))
@@ -80,13 +80,13 @@ func (s *Server) getIP(conn *server.Conn, data []byte) error {
 }
 
 // 统计在线人数
-func (s *Server) stat(conn *server.Conn, data []byte) error {
+func (s *Server) stat(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, err := protocol.DecodeStatReq(data)
 	if err != nil {
 		return err
 	}
 
-	if total, err := s.provider.Stat(context.Background(), kind); seq == 0 {
+	if total, err := s.provider.Stat(ctx, kind); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeStatRes(seq, codes.ErrorToCode(err), uint64(total)))
@@ -94,13 +94,13 @@ func (s *Server) stat(conn *server.Conn, data []byte) error {
 }
 
 // 检测用户是否在线
-func (s *Server) isOnline(conn *server.Conn, data []byte) error {
+func (s *Server) isOnline(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, target, err := protocol.DecodeIsOnlineReq(data)
 	if err != nil {
 		return err
 	}
 
-	if isOnline, err := s.provider.IsOnline(context.Background(), kind, target); seq == 0 {
+	if isOnline, err := s.provider.IsOnline(ctx, kind, target); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeIsOnlineRes(seq, codes.ErrorToCode(err), isOnline))
@@ -108,13 +108,13 @@ func (s *Server) isOnline(conn *server.Conn, data []byte) error {
 }
 
 // 断开连接
-func (s *Server) disconnect(conn *server.Conn, data []byte) error {
+func (s *Server) disconnect(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, target, force, err := protocol.DecodeDisconnectReq(data)
 	if err != nil {
 		return err
 	}
 
-	if err = s.provider.Disconnect(context.Background(), kind, target, force); seq == 0 {
+	if err = s.provider.Disconnect(ctx, kind, target, force); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeDisconnectRes(seq, codes.ErrorToCode(err)))
@@ -122,13 +122,13 @@ func (s *Server) disconnect(conn *server.Conn, data []byte) error {
 }
 
 // 推送单个消息
-func (s *Server) push(conn *server.Conn, data []byte) error {
+func (s *Server) push(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, target, message, err := protocol.DecodePushReq(data)
 	if err != nil {
 		return err
 	}
 
-	if err = s.provider.Push(context.Background(), kind, target, message); seq == 0 {
+	if err = s.provider.Push(ctx, kind, target, message); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodePushRes(seq, codes.ErrorToCode(err)))
@@ -136,13 +136,13 @@ func (s *Server) push(conn *server.Conn, data []byte) error {
 }
 
 // 推送组播消息
-func (s *Server) multicast(conn *server.Conn, data []byte) error {
+func (s *Server) multicast(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, targets, message, err := protocol.DecodeMulticastReq(data)
 	if err != nil {
 		return err
 	}
 
-	if total, err := s.provider.Multicast(context.Background(), kind, targets, message); seq == 0 {
+	if total, err := s.provider.Multicast(ctx, kind, targets, message); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeMulticastRes(seq, codes.ErrorToCode(err), uint64(total)))
@@ -150,13 +150,13 @@ func (s *Server) multicast(conn *server.Conn, data []byte) error {
 }
 
 // 推送广播消息
-func (s *Server) broadcast(conn *server.Conn, data []byte) error {
+func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, kind, message, err := protocol.DecodeBroadcastReq(data)
 	if err != nil {
 		return err
 	}
 
-	if total, err := s.provider.Broadcast(context.Background(), kind, message); seq == 0 {
+	if total, err := s.provider.Broadcast(ctx, kind, message); seq == 0 {
 		return err
 	} else {
 		return conn.Send(protocol.EncodeBroadcastRes(seq, codes.ErrorToCode(err), uint64(total)))

@@ -429,8 +429,10 @@ func (r *request) compareVersionRecycle(version int32) {
 	if r.version.CompareAndSwap(version, 0) {
 		if r.node.router.postRouteHandler != nil {
 			xcall.Call(func() { r.node.router.postRouteHandler(r) })
-			// 链路追踪
-			xcall.Call(func() { r.node.postTraceHandler(r) })
+		}
+		// 链路追踪
+		if r.node.router.postTraceHandler != nil {
+			xcall.Call(func() { r.node.router.postTraceHandler(r) })
 		}
 
 		r.reset()
@@ -448,6 +450,4 @@ func (r *request) reset() {
 		r.chain.Cancel()
 		r.chain = nil
 	}
-
-	r.ctx = context.Background()
 }

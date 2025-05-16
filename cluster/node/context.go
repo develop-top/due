@@ -119,5 +119,5 @@ const (
 )
 
 const (
-	SpanKey = "_span"
+	SpanRouteHandleKey = "_span_rh"
 )

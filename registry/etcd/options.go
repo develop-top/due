@@ -30,6 +30,8 @@ const (
 	defaultTimeoutKey       = "etc.registry.etcd.timeout"
 	defaultRetryTimesKey    = "etc.registry.etcd.retryTimes"
 	defaultRetryIntervalKey = "etc.registry.etcd.retryInterval"
+	defaultUser             = "etc.registry.etcd.username"
+	defaultPassword         = "etc.registry.etcd.password"
 )
 
 type Option func(o *options)
@@ -66,17 +68,25 @@ type options struct {
 	// 心跳重试间隔
 	// 默认为10秒
 	retryInterval time.Duration
+
+	// 用户名
+	username string
+
+	// 密码
+	password string
 }
 
 func defaultOptions() *options {
 	return &options{
-		ctx:           context.Background(),
 		addrs:         etc.Get(defaultAddrsKey, []string{defaultAddr}).Strings(),
 		dialTimeout:   etc.Get(defaultDialTimeoutKey, defaultDialTimeout).Duration(),
+		ctx:           context.Background(),
 		namespace:     etc.Get(defaultNamespaceKey, defaultNamespace).String(),
 		timeout:       etc.Get(defaultTimeoutKey, defaultTimeout).Duration(),
 		retryTimes:    etc.Get(defaultRetryTimesKey, defaultRetryTimes).Int(),
 		retryInterval: etc.Get(defaultRetryIntervalKey, defaultRetryInterval).Duration(),
+		username:      etc.Get(defaultUser).String(),
+		password:      etc.Get(defaultPassword).String(),
 	}
 }
 
