@@ -101,6 +101,9 @@ func newWatcherMgr(r *Registry, ctx context.Context, serviceName string) (*watch
 
 	for _, service := range services {
 		w.serviceInstances.Store(service.ID, service)
+		if mode.IsDebugMode() {
+			log.Debugf("registry etcd watch init: %+v", *service)
+		}
 	}
 
 	go func() {
