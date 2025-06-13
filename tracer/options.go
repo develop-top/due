@@ -16,7 +16,7 @@ const (
 	defaultEndpointKey  = "etc.opentracing.endpoint"
 	defaultSamplerKey   = "etc.opentracing.sampler"
 	defaultBatcherKey   = "etc.opentracing.batcher"
-	defaultDisableKey   = "etc.opentracing.disable"
+	defaultDisableKey   = "etc.opentracing.disabled"
 )
 
 var TraceName = "due" // 系统名称
