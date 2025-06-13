@@ -52,7 +52,7 @@ func (s *Server) trigger(ctx context.Context, conn *server.Conn, data []byte) er
 			return err
 		}
 	} else {
-		return conn.Send(protocol.EncodeTriggerRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodeTriggerRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -80,7 +80,7 @@ func (s *Server) deliver(ctx context.Context, conn *server.Conn, data []byte) er
 	if err = s.provider.Deliver(ctx, gid, nid, cid, uid, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeDeliverRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodeDeliverRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -93,7 +93,7 @@ func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) e
 
 	state, err := s.provider.GetState()
 
-	return conn.Send(protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
+	return conn.Send(ctx, protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
 }
 
 // 设置状态
@@ -105,5 +105,5 @@ func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) e
 
 	err = s.provider.SetState(state)
 
-	return conn.Send(protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
+	return conn.Send(ctx, protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
 }

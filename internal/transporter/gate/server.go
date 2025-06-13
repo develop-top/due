@@ -47,7 +47,7 @@ func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error
 	if err = s.provider.Bind(ctx, cid, uid); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeBindRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodeBindRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -61,7 +61,7 @@ func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) err
 	if err = s.provider.Unbind(ctx, uid); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeUnbindRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodeUnbindRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -75,7 +75,7 @@ func (s *Server) getIP(ctx context.Context, conn *server.Conn, data []byte) erro
 	if ip, err := s.provider.GetIP(ctx, kind, target); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeGetIPRes(seq, codes.ErrorToCode(err), ip))
+		return conn.Send(ctx, protocol.EncodeGetIPRes(seq, codes.ErrorToCode(err), ip))
 	}
 }
 
@@ -89,7 +89,7 @@ func (s *Server) stat(ctx context.Context, conn *server.Conn, data []byte) error
 	if total, err := s.provider.Stat(ctx, kind); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeStatRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, protocol.EncodeStatRes(seq, codes.ErrorToCode(err), uint64(total)))
 	}
 }
 
@@ -103,7 +103,7 @@ func (s *Server) isOnline(ctx context.Context, conn *server.Conn, data []byte) e
 	if isOnline, err := s.provider.IsOnline(ctx, kind, target); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeIsOnlineRes(seq, codes.ErrorToCode(err), isOnline))
+		return conn.Send(ctx, protocol.EncodeIsOnlineRes(seq, codes.ErrorToCode(err), isOnline))
 	}
 }
 
@@ -117,7 +117,7 @@ func (s *Server) disconnect(ctx context.Context, conn *server.Conn, data []byte)
 	if err = s.provider.Disconnect(ctx, kind, target, force); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeDisconnectRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodeDisconnectRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -131,7 +131,7 @@ func (s *Server) push(ctx context.Context, conn *server.Conn, data []byte) error
 	if err = s.provider.Push(ctx, kind, target, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodePushRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, protocol.EncodePushRes(seq, codes.ErrorToCode(err)))
 	}
 }
 
@@ -145,7 +145,7 @@ func (s *Server) multicast(ctx context.Context, conn *server.Conn, data []byte) 
 	if total, err := s.provider.Multicast(ctx, kind, targets, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeMulticastRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, protocol.EncodeMulticastRes(seq, codes.ErrorToCode(err), uint64(total)))
 	}
 }
 
@@ -159,7 +159,7 @@ func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) 
 	if total, err := s.provider.Broadcast(ctx, kind, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(protocol.EncodeBroadcastRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, protocol.EncodeBroadcastRes(seq, codes.ErrorToCode(err), uint64(total)))
 	}
 }
 
@@ -172,7 +172,7 @@ func (s *Server) getState(conn *server.Conn, data []byte) error {
 
 	state, err := s.provider.GetState()
 
-	return conn.Send(protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
+	return conn.Send(context.Background(), protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
 }
 
 // 设置状态
@@ -184,5 +184,5 @@ func (s *Server) setState(conn *server.Conn, data []byte) error {
 
 	err = s.provider.SetState(state)
 
-	return conn.Send(protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
+	return conn.Send(context.Background(), protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
 }

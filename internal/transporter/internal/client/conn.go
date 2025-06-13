@@ -1,11 +1,13 @@
 package client
 
 import (
+	"context"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/transporter/internal/def"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtime"
 	"github.com/develop-top/due/v2/utils/xtrace"
 	"net"
@@ -111,10 +113,12 @@ func (c *Conn) process(conn net.Conn) {
 
 	c.pending.store(seq, call)
 
+	// 携带链路追踪信息
+	ctx, span := xtrace.StartRPCClientSpan(context.Background(), "internal.RPCClient.Handshake", tracer.RPCMessageTypeSent)
+	defer span.End()
 	buf := protocol.EncodeHandshakeReq(seq, c.cli.opts.InsKind, c.cli.opts.InsID)
-
 	defer buf.Release()
-
+	buf = protocol.EncodeTraceBuffer(ctx, buf)
 	if _, err := conn.Write(buf.Bytes()); err != nil {
 		return
 	}
@@ -131,7 +135,7 @@ func (c *Conn) read(conn net.Conn) {
 		case <-c.done:
 			return
 		default:
-			isHeartbeat, _, seq, data, err := protocol.ReadMessage(conn)
+			isHeartbeat, _, seq, data, _, err := protocol.ReadTraceMessage(conn)
 			if err != nil {
 				c.retry(conn)
 				return
@@ -168,11 +172,18 @@ func (c *Conn) write(conn net.Conn) {
 				c.retry(conn)
 				return
 			} else {
-				if _, err := conn.Write(protocol.Heartbeat()); err != nil {
+				// 携带链路追踪信息
+				ctx, span := xtrace.StartRPCClientSpan(context.Background(), "internal.RPCClient.Heartbeat", tracer.RPCMessageTypeSent)
+				buf := protocol.EncodeTraceBuffer(ctx, buffer.NewNocopyBuffer(protocol.Heartbeat()))
+				if _, err := conn.Write(buf.Bytes()); err != nil {
 					log.Warnf("write heartbeat message error: %v", err)
+					buf.Release()
+					span.End()
 					c.retry(conn)
 					return
 				}
+				buf.Release()
+				span.End()
 			}
 		case ch, ok := <-c.chWrite:
 			if !ok {
@@ -184,7 +195,7 @@ func (c *Conn) write(conn net.Conn) {
 			}
 
 			// 携带链路追踪信息
-			ctx, span := xtrace.StartRPCClientSpan(ch.ctx, "internal.RPCClient")
+			ctx, span := xtrace.StartRPCClientSpan(ch.ctx, "internal.RPCClient", tracer.RPCMessageTypeSent)
 			ch.buf = protocol.EncodeTraceBuffer(ctx, ch.buf)
 			ch.buf.Range(func(node *buffer.NocopyNode) bool {
 				if _, err := conn.Write(node.Bytes()); err != nil {
@@ -193,9 +204,8 @@ func (c *Conn) write(conn net.Conn) {
 					return true
 				}
 			})
-			span.End()
-
 			ch.buf.Release()
+			span.End()
 		}
 	}
 }

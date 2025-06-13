@@ -8,6 +8,7 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/def"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtime"
 	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/trace"
@@ -47,7 +48,7 @@ func newConn(server *Server, conn net.Conn) *Conn {
 }
 
 // Send 发送消息
-func (c *Conn) Send(buf buffer.Buffer) (err error) {
+func (c *Conn) Send(ctx context.Context, buf buffer.Buffer) (err error) {
 	c.rw.RLock()
 	defer c.rw.RUnlock()
 
@@ -55,6 +56,10 @@ func (c *Conn) Send(buf buffer.Buffer) (err error) {
 		return err
 	}
 
+	// 携带链路追踪信息
+	ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer", tracer.RPCMessageTypeSent)
+	defer span.End()
+	buf = protocol.EncodeTraceBuffer(ctx, buf)
 	buf.Range(func(node *buffer.NocopyNode) bool {
 		if _, err = c.conn.Write(node.Bytes()); err != nil {
 			return false
@@ -153,15 +158,16 @@ func (c *Conn) process() {
 			atomic.StoreInt64(&c.lastHeartbeatTime, xtime.Now().Unix())
 
 			if ch.isHeartbeat {
-				c.heartbeat()
+				c.heartbeat(ch)
 			} else {
 				handler, ok := c.server.handlers[ch.route]
 				if !ok {
 					continue
 				}
 
+				// 携带链路追踪信息
 				ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
-				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer")
+				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer", tracer.RPCMessageTypeReceived)
 				if err := handler(ctx, c, ch.data); err != nil && !errors.Is(err, errors.ErrNotFoundUserLocation) {
 					log.Warnf("process route %d message failed: %v", ch.route, err)
 				}
@@ -172,11 +178,17 @@ func (c *Conn) process() {
 }
 
 // 响应心跳消息
-func (c *Conn) heartbeat() {
+func (c *Conn) heartbeat(ch chData) {
 	c.rw.RLock()
 	defer c.rw.RUnlock()
 
-	if _, err := c.conn.Write(protocol.Heartbeat()); err != nil {
+	// 携带链路追踪信息
+	ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
+	myCtx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer.Heartbeat", tracer.RPCMessageTypeSent)
+	defer span.End()
+	buf := protocol.EncodeTraceBuffer(myCtx, buffer.NewNocopyBuffer(protocol.Heartbeat()))
+	defer buf.Release()
+	if _, err := c.conn.Write(buf.Bytes()); err != nil {
 		log.Warnf("write heartbeat message error: %v", err)
 	}
 }

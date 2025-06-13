@@ -13,7 +13,7 @@ const defaultTraceCtxBytes = 25 // 链路追踪上下文字节数
 
 // 携带链路追踪数据
 // 结构：消息长度4B + 链路追踪上下文25B + 消息
-//TODO 原消息中前4字节数据冗余，需要去掉
+//TODO 原消息中前4字节数据冗余，需要去掉,所有编解码需要优化，在原有打好的包中修改数据要拷贝一次数据，希望不拷贝
 
 // MarshalSpanContext 序列化 SpanContext -> []byte
 func MarshalSpanContext(sc trace.SpanContext) []byte {
