@@ -86,7 +86,7 @@ func NewNode(opts ...Option) *Node {
 	}}
 	n.preTraceHandler = func(req Context) {
 		ctx := req.Context()
-		tr := tracer.TracerFromContext(ctx)
+		tr := tracer.FromContext(ctx)
 		spanCtx, span := tr.Start(ctx, "routerHandler",
 			trace.WithSpanKind(trace.SpanKindInternal),
 			trace.WithAttributes(
