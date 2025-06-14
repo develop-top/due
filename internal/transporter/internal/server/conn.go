@@ -7,6 +7,7 @@ import (
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/transporter/internal/def"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtime"
@@ -56,10 +57,6 @@ func (c *Conn) Send(ctx context.Context, buf buffer.Buffer) (err error) {
 		return err
 	}
 
-	// 携带链路追踪信息
-	ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer", tracer.RPCMessageTypeSent)
-	defer span.End()
-	buf = protocol.EncodeTraceBuffer(ctx, buf)
 	buf.Range(func(node *buffer.NocopyNode) bool {
 		if _, err = c.conn.Write(node.Bytes()); err != nil {
 			return false
@@ -110,7 +107,7 @@ func (c *Conn) read() {
 		case <-c.ctx.Done():
 			return
 		default:
-			isHeartbeat, route, _, data, traceCtx, err := protocol.ReadTraceMessage(conn)
+			isHeartbeat, r, _, data, traceCtx, err := protocol.ReadTraceMessage(conn)
 			if err != nil {
 				_ = c.close(true)
 				return
@@ -125,7 +122,7 @@ func (c *Conn) read() {
 
 			c.chData <- chData{
 				isHeartbeat: isHeartbeat,
-				route:       route,
+				route:       r,
 				data:        data,
 				trace:       traceCtx,
 			}
@@ -167,7 +164,11 @@ func (c *Conn) process() {
 
 				// 携带链路追踪信息
 				ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
-				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer", tracer.RPCMessageTypeReceived)
+				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer",
+					tracer.RPCMessageTypeReceived,
+					tracer.InstanceKind.String(c.InsKind.String()),
+					tracer.InstanceID.String(c.InsID),
+					tracer.RPCMessageIDKey.String(route.Name[ch.route]))
 				if err := handler(ctx, c, ch.data); err != nil && !errors.Is(err, errors.ErrNotFoundUserLocation) {
 					log.Warnf("process route %d message failed: %v", ch.route, err)
 				}
@@ -184,7 +185,10 @@ func (c *Conn) heartbeat(ch chData) {
 
 	// 携带链路追踪信息
 	ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
-	myCtx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer.Heartbeat", tracer.RPCMessageTypeSent)
+	myCtx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer.Heartbeat",
+		tracer.RPCMessageTypeSent,
+		tracer.InstanceKind.String(c.InsKind.String()),
+		tracer.InstanceID.String(c.InsID))
 	defer span.End()
 	buf := protocol.EncodeTraceBuffer(myCtx, buffer.NewNocopyBuffer(protocol.Heartbeat()))
 	defer buf.Release()

@@ -55,4 +55,7 @@ const (
 	GateID   = attribute.Key("gate.id")
 	NodeID   = attribute.Key("node.id")
 	ServerIP = attribute.Key("server.ip")
+
+	InstanceKind = attribute.Key("instance.kind") // 实例类型
+	InstanceID   = attribute.Key("instance.id")   // 实例id
 )

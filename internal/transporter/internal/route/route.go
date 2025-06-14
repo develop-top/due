@@ -16,3 +16,20 @@ const (
 	GetState                    // 获取状态
 	SetState                    // 设置状态
 )
+
+var Name = map[uint8]string{
+	Handshake:  "Handshake",
+	Bind:       "Bind",
+	Unbind:     "Unbind",
+	GetIP:      "GetIP",
+	Stat:       "Stat",
+	IsOnline:   "IsOnline",
+	Disconnect: "Disconnect",
+	Push:       "Push",
+	Multicast:  "Multicast",
+	Broadcast:  "Broadcast",
+	Trigger:    "Trigger",
+	Deliver:    "Deliver",
+	GetState:   "GetState",
+	SetState:   "SetState",
+}
