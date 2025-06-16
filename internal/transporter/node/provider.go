@@ -11,7 +11,7 @@ type Provider interface {
 	// Deliver 投递消息
 	Deliver(ctx context.Context, gid, nid string, cid, uid int64, message []byte) error
 	// GetState 获取状态
-	GetState() (cluster.State, error)
+	GetState(ctx context.Context) (cluster.State, error)
 	// SetState 设置状态
-	SetState(state cluster.State) error
+	SetState(ctx context.Context, state cluster.State) error
 }

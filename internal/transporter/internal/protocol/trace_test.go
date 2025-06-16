@@ -3,9 +3,8 @@ package protocol_test
 import (
 	"bytes"
 	"context"
-	"encoding/binary"
-	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	route2 "github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/trace"
@@ -25,21 +24,6 @@ func init() {
 		OtlpHttpSecure: false,
 		Disabled:       false,
 	})
-}
-
-func TestEncodeTraceBuffer(t *testing.T) {
-	buf := protocol.EncodeTraceBuffer(context.Background(), buffer.NewNocopyBuffer([]byte("hello")))
-	if binary.BigEndian.Uint32(buf.Bytes()) != 25+5 {
-		t.Fail()
-	}
-	for _, v := range buf.Bytes()[4:29] {
-		if v != uint8(0) {
-			t.Fail()
-		}
-	}
-	if string(buf.Bytes()[29:]) != "hello" {
-		t.Fail()
-	}
 }
 
 func TestUnmarshalSpanContext(t *testing.T) {
@@ -86,37 +70,40 @@ func TestReadTraceMessage(t *testing.T) {
 	ctx := context.Background()
 	ctx, _ = xtrace.StartRPCClientSpan(ctx, "test")
 
-	b := protocol.EncodeTraceBuffer(ctx, protocol.EncodeDeliverReq(1, 2, 3, []byte("hello")))
+	traceBytes := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
 
-	isHeartbeat, route, seq, data, traceCtx, err := protocol.ReadTraceMessage(bytes.NewBuffer(b.Bytes()))
+	buf := protocol.EncodeBuffer(0, route2.Deliver, 1, traceBytes, protocol.EncodeDeliverReq(2, 3, []byte("hello")))
+	t.Logf("buf:%v", buf.Bytes())
+
+	isHeartbeat, route, seq, data, traceCtx, err := protocol.ReadTraceMessage(bytes.NewBuffer(buf.Bytes()))
 	if err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if isHeartbeat {
-		t.Fatal()
+		t.Fatal("isHeartbeat")
 	}
-	if route != 12 {
-		t.Fatal()
+	if route != route2.Deliver {
+		t.Fatal(route)
 	}
 	if seq != 1 {
-		t.Fatal()
+		t.Fatal(seq)
 	}
 
 	seq, cid, uid, message, err := protocol.DecodeDeliverReq(data)
 	if err != nil {
-		t.Fatal()
+		t.Fatal(err)
 	}
 	if seq != 1 {
-		t.Fatal()
+		t.Fatal(seq)
 	}
 	if cid != 2 {
-		t.Fatal()
+		t.Fatal(cid)
 	}
 	if uid != 3 {
-		t.Fatal()
+		t.Fatal(uid)
 	}
 	if string(message) != "hello" {
-		t.Fatal()
+		t.Fatal(string(message))
 	}
 
 	t.Log(traceCtx)
@@ -126,16 +113,16 @@ func TestReadTraceMessage(t *testing.T) {
 	traceID := sc.TraceID()
 	traceIDEmpty := [16]byte{}
 	if slices.Equal(traceID[:], traceIDEmpty[:]) {
-		t.Fatal()
+		t.Fatal(traceID)
 	}
 
 	spanID := sc.SpanID()
 	spanIDEmpty := [8]byte{}
 	if slices.Equal(spanID[:], spanIDEmpty[:]) {
-		t.Fatal()
+		t.Fatal(spanID)
 	}
 
 	if !slices.Equal([]byte{byte(sc.TraceFlags())}, []byte{0}) {
-		t.Fatal()
+		t.Fatal(byte(sc.TraceFlags()))
 	}
 }

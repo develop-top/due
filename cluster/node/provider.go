@@ -53,11 +53,11 @@ func (p *provider) Deliver(ctx context.Context, gid, nid string, cid, uid int64,
 }
 
 // GetState 获取状态
-func (p *provider) GetState() (cluster.State, error) {
+func (p *provider) GetState(ctx context.Context) (cluster.State, error) {
 	return p.node.getState(), nil
 }
 
 // SetState 设置状态
-func (p *provider) SetState(state cluster.State) error {
+func (p *provider) SetState(ctx context.Context, state cluster.State) error {
 	return p.node.setState(state)
 }

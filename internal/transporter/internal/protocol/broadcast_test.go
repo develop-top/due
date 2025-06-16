@@ -19,7 +19,7 @@ func TestEncodeBroadcastReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := protocol.EncodeBroadcastReq(1, session.User, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBroadcastReq(session.User, buffer.NewNocopyBuffer(message)))
 
 	t.Log(buf.Bytes())
 }
@@ -33,8 +33,7 @@ func TestDecodeBroadcastReq(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	buf := protocol.EncodeBroadcastReq(1, session.User, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBroadcastReq(session.User, buffer.NewNocopyBuffer(message)))
 
 	seq, kind, message, err := protocol.DecodeBroadcastReq(buf.Bytes())
 	if err != nil {
@@ -47,13 +46,13 @@ func TestDecodeBroadcastReq(t *testing.T) {
 }
 
 func TestEncodeBroadcastRes(t *testing.T) {
-	buf := protocol.EncodeBroadcastRes(1, codes.OK, 20)
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBroadcastRes(codes.OK, 20))
 
 	t.Log(buf.Bytes())
 }
 
 func TestDecodeBroadcastRes(t *testing.T) {
-	buf := protocol.EncodeBroadcastRes(1, codes.OK, 20)
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBroadcastRes(codes.OK, 20))
 
 	code, total, err := protocol.DecodeBroadcastRes(buf.Bytes())
 	if err != nil {

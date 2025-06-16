@@ -6,13 +6,13 @@ import (
 )
 
 func TestEncodeUnbindReq(t *testing.T) {
-	buffer := protocol.EncodeUnbindReq(1, 2)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeUnbindReq(2))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeUnbindReq(t *testing.T) {
-	buffer := protocol.EncodeUnbindReq(1, 2)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeUnbindReq(2))
 
 	seq, uid, err := protocol.DecodeUnbindReq(buffer.Bytes())
 	if err != nil {
@@ -24,13 +24,13 @@ func TestDecodeUnbindReq(t *testing.T) {
 }
 
 func TestEncodeUnbindRes(t *testing.T) {
-	buffer := protocol.EncodeUnbindRes(1, 2)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeUnbindRes(2))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeUnbindRes(t *testing.T) {
-	buffer := protocol.EncodeUnbindRes(1, 2)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeUnbindRes(2))
 
 	code, err := protocol.DecodeUnbindRes(buffer.Bytes())
 	if err != nil {

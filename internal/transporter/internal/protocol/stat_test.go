@@ -1,13 +1,14 @@
 package protocol_test
 
 import (
+	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/session"
 	"testing"
 )
 
 func TestDecodeStatReq(t *testing.T) {
-	buffer := protocol.EncodeStatReq(1, session.User)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeStatReq(session.User))
 
 	seq, kind, err := protocol.DecodeStatReq(buffer.Bytes())
 	if err != nil {
@@ -19,7 +20,7 @@ func TestDecodeStatReq(t *testing.T) {
 }
 
 func TestDecodeStatRes(t *testing.T) {
-	buffer := protocol.EncodeStatRes(1, 2000)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeStatRes(codes.OK, 3000))
 
 	code, total, err := protocol.DecodeStatRes(buffer.Bytes())
 	if err != nil {

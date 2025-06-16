@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"context"
 	"encoding/binary"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
@@ -9,11 +8,60 @@ import (
 	"io"
 )
 
-const defaultTraceCtxBytes = 25 // 链路追踪上下文字节数
+const (
+	SizeHeadRouteSeqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes
+)
 
-// 携带链路追踪数据
-// 结构：消息长度4B + 链路追踪上下文25B + 消息
-//TODO 原消息中前4字节数据冗余，需要去掉,所有编解码需要优化，在原有打好的包中修改数据要拷贝一次数据，希望不拷贝
+// EncodeBuffer 组装消息包
+// size + head + route + seq + [trace] + [other]
+func EncodeBuffer(head, route uint8, seq uint64, trace []byte, other buffer.Buffer) buffer.Buffer {
+	buf := buffer.NewNocopyBuffer()
+	writer := buf.Malloc(SizeHeadRouteSeqBytes)
+	size := uint32(SizeHeadRouteSeqBytes - defaultSizeBytes + len(trace))
+	if other != nil {
+		size += uint32(other.Len())
+	}
+	writer.WriteUint32s(binary.BigEndian, size)
+	if len(trace) > 0 {
+		head |= TraceBit
+	}
+	writer.WriteUint8s(head)
+	writer.WriteUint8s(route)
+	writer.WriteUint64s(binary.BigEndian, seq)
+	if len(trace) > 0 {
+		buf.Mount(trace)
+	}
+	if other != nil && other.Len() > 0 {
+		buf.Mount(other)
+	}
+	return buf
+}
+
+func DecodeHeader(reader *buffer.Reader) (header uint8, err error) {
+	if _, err = reader.Seek(defaultSizeBytes, io.SeekStart); err != nil {
+		return
+	}
+
+	header, err = reader.ReadUint8()
+	if err != nil {
+		return
+	}
+
+	return header, nil
+}
+
+func DecodeSeq(reader *buffer.Reader) (seq uint64, err error) {
+	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes, io.SeekStart); err != nil {
+		return
+	}
+
+	seq, err = reader.ReadUint64(binary.BigEndian)
+	if err != nil {
+		return
+	}
+
+	return seq, nil
+}
 
 // MarshalSpanContext 序列化 SpanContext -> []byte
 func MarshalSpanContext(sc trace.SpanContext) []byte {
@@ -28,7 +76,7 @@ func MarshalSpanContext(sc trace.SpanContext) []byte {
 
 // UnmarshalSpanContext 反序列化 []byte -> SpanContext
 func UnmarshalSpanContext(data []byte) trace.SpanContext {
-	if len(data) < defaultTraceCtxBytes {
+	if len(data) < defaultTraceBytes {
 		return trace.SpanContext{} // 或报错
 	}
 	var traceID [16]byte
@@ -45,22 +93,8 @@ func UnmarshalSpanContext(data []byte) trace.SpanContext {
 	})
 }
 
-// EncodeTraceMessage 序列化
-func EncodeTraceMessage(data buffer.Buffer, traceCtx []byte) buffer.Buffer {
-	buf := buffer.NewNocopyBuffer()
-	writer := buf.Malloc(defaultSizeBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(len(traceCtx)+data.Len()))
-	buf.Mount(traceCtx)
-	buf.Mount(data)
-	return buf
-}
-
-func EncodeTraceBuffer(ctx context.Context, data buffer.Buffer) buffer.Buffer {
-	traceCtx := MarshalSpanContext(trace.SpanContextFromContext(ctx))
-	return EncodeTraceMessage(data, traceCtx)
-}
-
 // ReadTraceMessage 读取消息
+// size + head + route + seq + [trace] + [other]
 func ReadTraceMessage(reader io.Reader) (isHeartbeat bool, route uint8, seq uint64, data, traceCtx []byte, err error) {
 	buf := sizePool.Get().([]byte)
 
@@ -86,21 +120,23 @@ func ReadTraceMessage(reader io.Reader) (isHeartbeat bool, route uint8, seq uint
 		return
 	}
 
-	traceCtx = data[defaultSizeBytes : defaultSizeBytes+defaultTraceCtxBytes]
+	header := data[defaultSizeBytes : defaultSizeBytes+defaultHeaderBytes][0]
 
-	header := data[defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes : defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes+defaultHeaderBytes][0]
-
-	isHeartbeat = header&heartbeatBit == heartbeatBit
+	isHeartbeat = header&HeartbeatBit == HeartbeatBit
 
 	if isHeartbeat {
 		return
 	}
 
-	route = data[defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes+defaultHeaderBytes : defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes][0]
+	route = data[defaultSizeBytes+defaultHeaderBytes : defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes][0]
 
-	seq = binary.BigEndian.Uint64(data[defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes : defaultSizeBytes+defaultTraceCtxBytes+defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes+8])
+	seq = binary.BigEndian.Uint64(data[defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes : defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes+defaultSeqBytes])
 
-	data = data[defaultSizeBytes+defaultTraceCtxBytes:]
+	hasTrace := header&TraceBit == TraceBit
+
+	if hasTrace {
+		traceCtx = data[SizeHeadRouteSeqBytes : SizeHeadRouteSeqBytes+defaultTraceBytes]
+	}
 
 	return
 }

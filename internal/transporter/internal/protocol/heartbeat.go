@@ -10,7 +10,7 @@ var heartbeat []byte
 func init() {
 	writer := buffer.NewWriter(defaultSizeBytes + defaultHeaderBytes)
 	writer.WriteUint32s(binary.BigEndian, uint32(defaultHeaderBytes))
-	writer.WriteUint8s(heartbeatBit)
+	writer.WriteUint8s(HeartbeatBit)
 	heartbeat = writer.Bytes()
 }
 

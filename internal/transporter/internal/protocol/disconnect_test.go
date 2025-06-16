@@ -8,13 +8,13 @@ import (
 )
 
 func TestEncodeDisconnectReq(t *testing.T) {
-	buffer := protocol.EncodeDisconnectReq(1, session.User, 3, true)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDisconnectReq(session.User, 3, true))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeDisconnectReq(t *testing.T) {
-	buffer := protocol.EncodeDisconnectReq(1, session.User, 3, false)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDisconnectReq(session.User, 3, false))
 
 	seq, kind, target, force, err := protocol.DecodeDisconnectReq(buffer.Bytes())
 	if err != nil {
@@ -28,13 +28,13 @@ func TestDecodeDisconnectReq(t *testing.T) {
 }
 
 func TestEncodeDisconnectRes(t *testing.T) {
-	buffer := protocol.EncodeDisconnectRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDisconnectRes(codes.OK))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeDisconnectRes(t *testing.T) {
-	buffer := protocol.EncodeDisconnectRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDisconnectRes(codes.InternalError))
 
 	code, err := protocol.DecodeDisconnectRes(buffer.Bytes())
 	if err != nil {

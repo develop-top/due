@@ -39,7 +39,7 @@ func ReadMessage(reader io.Reader) (isHeartbeat bool, route uint8, seq uint64, d
 
 	header := data[defaultSizeBytes : defaultSizeBytes+defaultHeaderBytes][0]
 
-	isHeartbeat = header&heartbeatBit == heartbeatBit
+	isHeartbeat = header&HeartbeatBit == HeartbeatBit
 
 	if isHeartbeat {
 		return

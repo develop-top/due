@@ -26,7 +26,7 @@ type Provider interface {
 	// Broadcast 推送广播消息
 	Broadcast(ctx context.Context, kind session.Kind, message []byte) (total int64, err error)
 	// GetState 获取状态
-	GetState() (cluster.State, error)
+	GetState(ctx context.Context) (cluster.State, error)
 	// SetState 设置状态
-	SetState(state cluster.State) error
+	SetState(ctx context.Context, state cluster.State) error
 }

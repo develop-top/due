@@ -8,13 +8,13 @@ import (
 )
 
 func TestEncodeTriggerReq(t *testing.T) {
-	buffer := protocol.EncodeTriggerReq(1, cluster.Disconnect, 1)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeTriggerReq(cluster.Disconnect, 1))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeTriggerReq(t *testing.T) {
-	buffer := protocol.EncodeTriggerReq(1, cluster.Disconnect, 1, 2)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeTriggerReq(cluster.Disconnect, 1, 2))
 
 	seq, evt, cid, uid, err := protocol.DecodeTriggerReq(buffer.Bytes())
 	if err != nil {
@@ -28,13 +28,13 @@ func TestDecodeTriggerReq(t *testing.T) {
 }
 
 func TestEncodeTriggerRes(t *testing.T) {
-	buffer := protocol.EncodeTriggerRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeTriggerRes(codes.InternalError))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeTriggerRes(t *testing.T) {
-	buffer := protocol.EncodeTriggerRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeTriggerRes(codes.InternalError))
 
 	code, err := protocol.DecodeTriggerRes(buffer.Bytes())
 	if err != nil {

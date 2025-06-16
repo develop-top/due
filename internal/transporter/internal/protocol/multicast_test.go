@@ -19,7 +19,7 @@ func TestEncodeMulticastReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := protocol.EncodeMulticastReq(1, session.User, []int64{1, 2, 3}, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(protocol.DataBit, 0, 1, nil, protocol.EncodeMulticastReq(session.User, []int64{1, 2, 3}, buffer.NewNocopyBuffer(message)))
 
 	t.Log(buf.Bytes())
 }
@@ -34,7 +34,7 @@ func TestDecodeMulticastReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := protocol.EncodeMulticastReq(1, session.User, []int64{1, 2, 3}, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(protocol.DataBit, 0, 1, nil, protocol.EncodeMulticastReq(session.User, []int64{1, 2, 3}, buffer.NewNocopyBuffer(message)))
 
 	seq, kind, targets, message, err := protocol.DecodeMulticastReq(buf.Bytes())
 	if err != nil {
@@ -48,13 +48,13 @@ func TestDecodeMulticastReq(t *testing.T) {
 }
 
 func TestEncodeMulticastRes(t *testing.T) {
-	buf := protocol.EncodeMulticastRes(1, codes.OK, 20)
+	buf := protocol.EncodeBuffer(protocol.DataBit, 0, 1, nil, protocol.EncodeMulticastRes(codes.OK, 20))
 
 	t.Log(buf.Bytes())
 }
 
 func TestDecodeMulticastRes(t *testing.T) {
-	buf := protocol.EncodeMulticastRes(1, codes.OK, 20)
+	buf := protocol.EncodeBuffer(protocol.DataBit, 0, 1, nil, protocol.EncodeMulticastRes(codes.OK, 20))
 
 	code, total, err := protocol.DecodeMulticastRes(buf.Bytes())
 	if err != nil {

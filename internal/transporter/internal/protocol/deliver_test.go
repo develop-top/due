@@ -7,13 +7,13 @@ import (
 )
 
 func TestEncodeDeliverReq(t *testing.T) {
-	buffer := protocol.EncodeDeliverReq(1, 2, 3, []byte("hello world"))
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDeliverReq(2, 3, []byte("hello world")))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeDeliverReq(t *testing.T) {
-	buffer := protocol.EncodeDeliverReq(1, 2, 3, []byte("hello world"))
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDeliverReq(2, 3, []byte("hello world")))
 
 	seq, cid, uid, message, err := protocol.DecodeDeliverReq(buffer.Bytes())
 	if err != nil {
@@ -27,13 +27,13 @@ func TestDecodeDeliverReq(t *testing.T) {
 }
 
 func TestEncodeDeliverRes(t *testing.T) {
-	buffer := protocol.EncodeDeliverRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDeliverRes(codes.InternalError))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeDeliverRes(t *testing.T) {
-	buffer := protocol.EncodePushRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeDeliverRes(codes.InternalError))
 
 	code, err := protocol.DecodeDeliverRes(buffer.Bytes())
 	if err != nil {

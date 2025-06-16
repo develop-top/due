@@ -152,5 +152,5 @@ func (s *Server) handshake(ctx context.Context, conn *Conn, data []byte) error {
 	conn.InsKind = insKind
 	conn.InsID = insID
 
-	return conn.Send(ctx, protocol.EncodeHandshakeRes(seq, codes.ErrorToCode(err)))
+	return conn.Send(ctx, protocol.EncodeBuffer(protocol.DataBit, route.Handshake, seq, nil, protocol.EncodeHandshakeRes(codes.ErrorToCode(err))))
 }

@@ -19,8 +19,12 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 )
 
+var IsOpen bool // 是否启动链路追踪
+
 func init() {
-	StartAgent(defaultOptions())
+	options := defaultOptions()
+	StartAgent(options)
+	IsOpen = !options.Disabled
 }
 
 const (

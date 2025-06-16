@@ -2,10 +2,17 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/client"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/internal/transporter/internal/route"
+	"github.com/develop-top/due/v2/tracer"
+	"github.com/develop-top/due/v2/utils/xtrace"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"sync/atomic"
 )
 
@@ -20,21 +27,47 @@ func NewClient(cli *client.Client) *Client {
 	}
 }
 
+func (c *Client) traceBuffer(ctx context.Context, routeID uint8, seq uint64, buf buffer.Buffer, attr ...attribute.KeyValue) (
+	context.Context, func(), buffer.Buffer) {
+	if !tracer.IsOpen {
+		return ctx, func() {}, protocol.EncodeBuffer(protocol.DataBit, routeID, seq, nil, buf)
+	}
+
+	name := route.Name[routeID]
+
+	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
+	buf = protocol.EncodeBuffer(protocol.DataBit, routeID, seq, traceCtx, buf)
+	myCtx, span := xtrace.StartRPCClientSpan(ctx, fmt.Sprintf("internal.RPCClient.%s", name),
+		append([]attribute.KeyValue{
+			tracer.RPCMessageTypeSent,
+			tracer.RPCMessageTypeKey.String(cluster.Node.String()),
+			tracer.RPCMessageIDKey.String(name),
+			tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
+		}, attr...)...)
+
+	return myCtx, func() { span.End() }, buf
+}
+
 // Trigger 触发事件
 func (c *Client) Trigger(ctx context.Context, event cluster.Event, cid, uid int64) error {
-	return c.cli.Send(ctx, protocol.EncodeTriggerReq(0, event, cid, uid))
+	ctx, end, buf := c.traceBuffer(ctx, route.Trigger, 0, protocol.EncodeTriggerReq(event, cid, uid))
+	defer end()
+	return c.cli.Send(ctx, buf)
 }
 
 // Deliver 投递消息
 func (c *Client) Deliver(ctx context.Context, cid, uid int64, message []byte) error {
-	return c.cli.Send(ctx, protocol.EncodeDeliverReq(0, cid, uid, message), cid)
+	ctx, end, buf := c.traceBuffer(ctx, route.Deliver, 0, protocol.EncodeDeliverReq(cid, uid, message))
+	defer end()
+	return c.cli.Send(ctx, buf, cid)
 }
 
 // GetState 获取状态
 func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeGetStateReq(seq)
+	ctx, end, buf := c.traceBuffer(ctx, route.GetState, seq, nil)
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -53,7 +86,8 @@ func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 func (c *Client) SetState(ctx context.Context, state cluster.State) error {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeSetStateReq(seq, state)
+	ctx, end, buf := c.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateReq(state))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {

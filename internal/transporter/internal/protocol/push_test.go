@@ -19,7 +19,7 @@ func TestEncodePushReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := protocol.EncodePushReq(1, session.User, 3, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodePushReq(session.User, 3, buffer.NewNocopyBuffer(message)))
 
 	t.Log(buf.Bytes())
 }
@@ -34,7 +34,7 @@ func TestDecodePushReq(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	buf := protocol.EncodePushReq(1, session.User, 3, buffer.NewNocopyBuffer(message))
+	buf := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodePushReq(session.User, 3, buffer.NewNocopyBuffer(message)))
 
 	seq, kind, target, msg, err := protocol.DecodePushReq(buf.Bytes())
 	if err != nil {
@@ -48,13 +48,13 @@ func TestDecodePushReq(t *testing.T) {
 }
 
 func TestEncodePushRes(t *testing.T) {
-	buffer := protocol.EncodePushRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodePushRes(codes.OK))
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodePushRes(t *testing.T) {
-	buffer := protocol.EncodePushRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodePushRes(codes.InternalError))
 
 	code, err := protocol.DecodePushRes(buffer.Bytes())
 	if err != nil {

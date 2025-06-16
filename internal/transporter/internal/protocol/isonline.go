@@ -4,46 +4,41 @@ import (
 	"encoding/binary"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/session"
 	"io"
 )
 
 const (
-	isOnlineReqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + b8 + b64
-	isOnlineResBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + defaultCodeBytes + b8
+	isOnlineReqBytes = b8 + b64
+	isOnlineResBytes = defaultCodeBytes + b8
 )
 
 // EncodeIsOnlineReq 编码检测用户是否在线请求
-// 协议：size + header + route + seq + session kind + target
-func EncodeIsOnlineReq(seq uint64, kind session.Kind, target int64) buffer.Buffer {
+// 协议：session kind + target
+func EncodeIsOnlineReq(kind session.Kind, target int64) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(isOnlineReqBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(isOnlineReqBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.IsOnline)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint8s(uint8(kind))
 	writer.WriteInt64s(binary.BigEndian, target)
-
 	return buf
 }
 
 // DecodeIsOnlineReq 解码检测用户是否在线请求
-// 协议：size + header + route + seq + session kind + target
+// 协议：size + header + route + seq + [trace] + session kind + target
 func DecodeIsOnlineReq(data []byte) (seq uint64, kind session.Kind, target int64, err error) {
-	if len(data) != isOnlineReqBytes {
+	if len(data) < SizeHeadRouteSeqBytes+isOnlineReqBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes, io.SeekStart); err != nil {
+	seq, err = DecodeSeq(reader)
+	if err != nil {
 		return
 	}
 
-	if seq, err = reader.ReadUint64(binary.BigEndian); err != nil {
+	if _, err = reader.Seek(-isOnlineReqBytes, io.SeekEnd); err != nil {
 		return
 	}
 
@@ -62,31 +57,26 @@ func DecodeIsOnlineReq(data []byte) (seq uint64, kind session.Kind, target int64
 }
 
 // EncodeIsOnlineRes 编码检测用户是否在线响应
-// 协议：size + header + route + seq + code + online state
-func EncodeIsOnlineRes(seq uint64, code uint16, isOnline bool) buffer.Buffer {
+// 协议：code + online state
+func EncodeIsOnlineRes(code uint16, isOnline bool) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(isOnlineResBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(isOnlineResBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.IsOnline)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint16s(binary.BigEndian, code)
 	writer.WriteBools(isOnline)
-
 	return buf
 }
 
 // DecodeIsOnlineRes 解码检测用户是否在线响应
-// 协议：size + header + route + seq + code + online state
+// 协议：size + header + route + seq + [trace] + code + online state
 func DecodeIsOnlineRes(data []byte) (code uint16, isOnline bool, err error) {
-	if len(data) != isOnlineResBytes {
+	if len(data) < SizeHeadRouteSeqBytes+isOnlineResBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes+defaultSeqBytes, io.SeekStart); err != nil {
+	if _, err = reader.Seek(-isOnlineResBytes, io.SeekEnd); err != nil {
 		return
 	}
 

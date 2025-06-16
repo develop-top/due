@@ -1,19 +1,20 @@
 package protocol_test
 
 import (
+	"testing"
+
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
-	"testing"
 )
 
 func TestEncodeBindReq(t *testing.T) {
-	buffer := protocol.EncodeBindReq(1, 2, 3)
+	buffer := protocol.EncodeBindReq(2, 3)
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeBindReq(t *testing.T) {
-	buffer := protocol.EncodeBindReq(1, 2, 3)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBindReq(2, 3))
 
 	seq, cid, uid, err := protocol.DecodeBindReq(buffer.Bytes())
 	if err != nil {
@@ -26,13 +27,13 @@ func TestDecodeBindReq(t *testing.T) {
 }
 
 func TestEncodeBindRes(t *testing.T) {
-	buffer := protocol.EncodeBindRes(1, codes.OK)
+	buffer := protocol.EncodeBindRes(codes.OK)
 
 	t.Log(buffer.Bytes())
 }
 
 func TestDecodeBindRes(t *testing.T) {
-	buffer := protocol.EncodeBindRes(1, codes.OK)
+	buffer := protocol.EncodeBuffer(0, 0, 1, nil, protocol.EncodeBindRes(codes.OK))
 
 	code, err := protocol.DecodeBindRes(buffer.Bytes())
 	if err != nil {

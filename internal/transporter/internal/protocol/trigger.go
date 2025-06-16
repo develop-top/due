@@ -5,29 +5,24 @@ import (
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"io"
 )
 
 const (
-	triggerReqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + b8 + b64 + b64
-	triggerResBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + defaultCodeBytes
+	triggerReqBytes = b8 + b64 + b64
+	triggerResBytes = defaultCodeBytes
 )
 
 // EncodeTriggerReq 编码触发事件请求
-// 协议：size + header + route + seq + event + cid + [uid]
-func EncodeTriggerReq(seq uint64, event cluster.Event, cid int64, uid ...int64) buffer.Buffer {
-	size := triggerReqBytes - defaultSizeBytes
+// 协议：event + cid + [uid]
+func EncodeTriggerReq(event cluster.Event, cid int64, uid ...int64) buffer.Buffer {
+	size := triggerReqBytes
 	if len(uid) == 0 || uid[0] == 0 {
 		size -= b64
 	}
 
 	buf := buffer.NewNocopyBuffer()
-	writer := buf.Malloc(triggerReqBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(size))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Trigger)
-	writer.WriteUint64s(binary.BigEndian, seq)
+	writer := buf.Malloc(size)
 	writer.WriteUint8s(uint8(event))
 	writer.WriteInt64s(binary.BigEndian, cid)
 
@@ -39,20 +34,30 @@ func EncodeTriggerReq(seq uint64, event cluster.Event, cid int64, uid ...int64) 
 }
 
 // DecodeTriggerReq 解码触发事件请求
-// 协议：size + header + route + seq + event + cid + [uid]
+// 协议：size + header + route + seq + [trace] + event + cid + [uid]
 func DecodeTriggerReq(data []byte) (seq uint64, event cluster.Event, cid int64, uid int64, err error) {
-	if len(data) != triggerReqBytes && len(data) != triggerReqBytes-b64 {
+	if len(data) < SizeHeadRouteSeqBytes+triggerReqBytes-b64 {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes, io.SeekStart); err != nil {
+	seq, err = DecodeSeq(reader)
+	if err != nil {
 		return
 	}
 
-	if seq, err = reader.ReadUint64(binary.BigEndian); err != nil {
+	var header uint8
+	if header, err = DecodeHeader(reader); err != nil {
+		return
+	}
+	index := SizeHeadRouteSeqBytes
+	if header&TraceBit == TraceBit {
+		index += defaultTraceBytes
+	}
+
+	if _, err = reader.Seek(int64(index), io.SeekStart); err != nil {
 		return
 	}
 
@@ -67,7 +72,7 @@ func DecodeTriggerReq(data []byte) (seq uint64, event cluster.Event, cid int64, 
 		return
 	}
 
-	if len(data) == triggerReqBytes {
+	if len(data) == index+triggerReqBytes {
 		uid, err = reader.ReadInt64(binary.BigEndian)
 	}
 
@@ -75,30 +80,25 @@ func DecodeTriggerReq(data []byte) (seq uint64, event cluster.Event, cid int64, 
 }
 
 // EncodeTriggerRes 编码触发事件响应
-// 协议：size + header + route + seq + code
-func EncodeTriggerRes(seq uint64, code uint16) buffer.Buffer {
+// 协议：code
+func EncodeTriggerRes(code uint16) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(triggerResBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(triggerResBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Trigger)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint16s(binary.BigEndian, code)
-
 	return buf
 }
 
 // DecodeTriggerRes 解码触发事件响应
-// 协议：size + header + route + seq + code
+// 协议：size + header + route + seq + [trace] + code
 func DecodeTriggerRes(data []byte) (code uint16, err error) {
-	if len(data) != triggerResBytes {
+	if len(data) < SizeHeadRouteSeqBytes+triggerResBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(-defaultCodeBytes, io.SeekEnd); err != nil {
+	if _, err = reader.Seek(-triggerResBytes, io.SeekEnd); err != nil {
 		return
 	}
 

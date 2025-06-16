@@ -3,11 +3,14 @@ package node
 import (
 	"context"
 	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/internal/transporter/internal/server"
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Server struct {
@@ -34,6 +37,14 @@ func (s *Server) init() {
 	s.RegisterHandler(route.SetState, s.setState)
 }
 
+func (s *Server) traceBuffer(ctx context.Context, route uint8, seq uint64, buf buffer.Buffer) buffer.Buffer {
+	if !tracer.IsOpen {
+		return protocol.EncodeBuffer(protocol.DataBit, route, seq, nil, buf)
+	}
+	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
+	return protocol.EncodeBuffer(protocol.DataBit, route, seq, traceCtx, buf)
+}
+
 // 触发事件
 func (s *Server) trigger(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, event, cid, uid, err := protocol.DecodeTriggerReq(data)
@@ -52,7 +63,7 @@ func (s *Server) trigger(ctx context.Context, conn *server.Conn, data []byte) er
 			return err
 		}
 	} else {
-		return conn.Send(ctx, protocol.EncodeTriggerRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Trigger, seq, protocol.EncodeTriggerRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -80,20 +91,20 @@ func (s *Server) deliver(ctx context.Context, conn *server.Conn, data []byte) er
 	if err = s.provider.Deliver(ctx, gid, nid, cid, uid, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeDeliverRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Deliver, seq, protocol.EncodeDeliverRes(codes.ErrorToCode(err))))
 	}
 }
 
 // 获取状态
 func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) error {
-	seq, err := protocol.DecodeGetStateReq(data)
+	seq, err := protocol.DecodeSeq(buffer.NewReader(data))
 	if err != nil {
 		return err
 	}
 
-	state, err := s.provider.GetState()
+	state, err := s.provider.GetState(ctx)
 
-	return conn.Send(ctx, protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
+	return conn.Send(ctx, s.traceBuffer(ctx, route.GetState, seq, protocol.EncodeGetStateRes(codes.ErrorToCode(err), state)))
 }
 
 // 设置状态
@@ -103,7 +114,7 @@ func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) e
 		return err
 	}
 
-	err = s.provider.SetState(state)
+	err = s.provider.SetState(ctx, state)
 
-	return conn.Send(ctx, protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
+	return conn.Send(ctx, s.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateRes(codes.ErrorToCode(err))))
 }

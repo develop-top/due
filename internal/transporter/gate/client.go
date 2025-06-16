@@ -2,12 +2,18 @@ package gate
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/client"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
+	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/session"
+	"github.com/develop-top/due/v2/tracer"
+	"github.com/develop-top/due/v2/utils/xtrace"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"sync/atomic"
 )
 
@@ -22,11 +28,34 @@ func NewClient(cli *client.Client) *Client {
 	}
 }
 
+// 携带链路追踪信息
+func (c *Client) traceBuffer(ctx context.Context, routeID uint8, seq uint64, buf buffer.Buffer, attr ...attribute.KeyValue) (
+	context.Context, func(), buffer.Buffer) {
+	if !tracer.IsOpen {
+		return ctx, func() {}, protocol.EncodeBuffer(protocol.DataBit, routeID, seq, nil, buf)
+	}
+
+	name := route.Name[routeID]
+
+	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
+	buf = protocol.EncodeBuffer(protocol.DataBit, routeID, seq, traceCtx, buf)
+	myCtx, span := xtrace.StartRPCClientSpan(ctx, fmt.Sprintf("internal.RPCClient.%s", name),
+		append([]attribute.KeyValue{
+			tracer.RPCMessageTypeSent,
+			tracer.RPCMessageTypeKey.String(cluster.Gate.String()),
+			tracer.RPCMessageIDKey.String(name),
+			tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
+		}, attr...)...)
+
+	return myCtx, func() { span.End() }, buf
+}
+
 // Bind 绑定用户与连接
 func (c *Client) Bind(ctx context.Context, cid, uid int64) (bool, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeBindReq(seq, cid, uid)
+	ctx, end, buf := c.traceBuffer(ctx, route.Bind, seq, protocol.EncodeBindReq(cid, uid))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -45,7 +74,8 @@ func (c *Client) Bind(ctx context.Context, cid, uid int64) (bool, error) {
 func (c *Client) Unbind(ctx context.Context, uid int64) (bool, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeUnbindReq(seq, uid)
+	ctx, end, buf := c.traceBuffer(ctx, route.Unbind, seq, protocol.EncodeUnbindReq(uid))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -64,7 +94,8 @@ func (c *Client) Unbind(ctx context.Context, uid int64) (bool, error) {
 func (c *Client) GetIP(ctx context.Context, kind session.Kind, target int64) (string, bool, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeGetIPReq(seq, kind, target)
+	ctx, end, buf := c.traceBuffer(ctx, route.GetIP, seq, protocol.EncodeGetIPReq(kind, target))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -83,7 +114,8 @@ func (c *Client) GetIP(ctx context.Context, kind session.Kind, target int64) (st
 func (c *Client) Stat(ctx context.Context, kind session.Kind) (int64, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeStatReq(seq, kind)
+	ctx, end, buf := c.traceBuffer(ctx, route.Stat, seq, protocol.EncodeStatReq(kind))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -99,7 +131,8 @@ func (c *Client) Stat(ctx context.Context, kind session.Kind) (int64, error) {
 func (c *Client) IsOnline(ctx context.Context, kind session.Kind, target int64) (bool, bool, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeIsOnlineReq(seq, kind, target)
+	ctx, end, buf := c.traceBuffer(ctx, route.IsOnline, seq, protocol.EncodeIsOnlineReq(kind, target))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -116,33 +149,43 @@ func (c *Client) IsOnline(ctx context.Context, kind session.Kind, target int64) 
 
 // Disconnect 断开连接
 func (c *Client) Disconnect(ctx context.Context, kind session.Kind, target int64, force bool) error {
+	ctx, end, buf := c.traceBuffer(ctx, route.Disconnect, 0, protocol.EncodeDisconnectReq(kind, target, force))
+	defer end()
+
 	if force {
-		return c.cli.Send(ctx, protocol.EncodeDisconnectReq(0, kind, target, force))
+		return c.cli.Send(ctx, buf)
 	} else {
-		return c.cli.Send(ctx, protocol.EncodeDisconnectReq(0, kind, target, force), target)
+		return c.cli.Send(ctx, buf, target)
 	}
 }
 
 // Push 异步推送消息
 func (c *Client) Push(ctx context.Context, kind session.Kind, target int64, message buffer.Buffer) error {
-	return c.cli.Send(ctx, protocol.EncodePushReq(0, kind, target, message), target)
+	ctx, end, buf := c.traceBuffer(ctx, route.Push, 0, protocol.EncodePushReq(kind, target, message))
+	defer end()
+	return c.cli.Send(ctx, buf, target)
 }
 
 // Multicast 推送组播消息
 func (c *Client) Multicast(ctx context.Context, kind session.Kind, targets []int64, message buffer.Buffer) error {
-	return c.cli.Send(ctx, protocol.EncodeMulticastReq(0, kind, targets, message))
+	ctx, end, buf := c.traceBuffer(ctx, route.Multicast, 0, protocol.EncodeMulticastReq(kind, targets, message))
+	defer end()
+	return c.cli.Send(ctx, buf)
 }
 
 // Broadcast 推送广播消息
 func (c *Client) Broadcast(ctx context.Context, kind session.Kind, message buffer.Buffer) error {
-	return c.cli.Send(ctx, protocol.EncodeBroadcastReq(0, kind, message))
+	ctx, end, buf := c.traceBuffer(ctx, route.Broadcast, 0, protocol.EncodeBroadcastReq(kind, message))
+	defer end()
+	return c.cli.Send(ctx, buf)
 }
 
 // GetState 获取状态
 func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeGetStateReq(seq)
+	ctx, end, buf := c.traceBuffer(ctx, route.GetState, seq, nil)
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {
@@ -161,7 +204,8 @@ func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 func (c *Client) SetState(ctx context.Context, state cluster.State) error {
 	seq := c.doGenSequence()
 
-	buf := protocol.EncodeSetStateReq(seq, state)
+	ctx, end, buf := c.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateReq(state))
+	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
 	if err != nil {

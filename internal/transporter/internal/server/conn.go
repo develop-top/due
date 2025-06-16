@@ -7,11 +7,8 @@ import (
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/transporter/internal/def"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/log"
-	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtime"
-	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/trace"
 	"net"
 	"sync"
@@ -155,44 +152,29 @@ func (c *Conn) process() {
 			atomic.StoreInt64(&c.lastHeartbeatTime, xtime.Now().Unix())
 
 			if ch.isHeartbeat {
-				c.heartbeat(ch)
+				c.heartbeat()
 			} else {
 				handler, ok := c.server.handlers[ch.route]
 				if !ok {
 					continue
 				}
 
-				// 携带链路追踪信息
+				// 携带链路追踪上下文
 				ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
-				ctx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer",
-					tracer.RPCMessageTypeReceived,
-					tracer.InstanceKind.String(c.InsKind.String()),
-					tracer.InstanceID.String(c.InsID),
-					tracer.RPCMessageIDKey.String(route.Name[ch.route]))
 				if err := handler(ctx, c, ch.data); err != nil && !errors.Is(err, errors.ErrNotFoundUserLocation) {
 					log.Warnf("process route %d message failed: %v", ch.route, err)
 				}
-				span.End()
 			}
 		}
 	}
 }
 
 // 响应心跳消息
-func (c *Conn) heartbeat(ch chData) {
+func (c *Conn) heartbeat() {
 	c.rw.RLock()
 	defer c.rw.RUnlock()
 
-	// 携带链路追踪信息
-	ctx := trace.ContextWithRemoteSpanContext(context.Background(), protocol.UnmarshalSpanContext(ch.trace))
-	myCtx, span := xtrace.StartRPCServerSpan(ctx, "internal.RPCServer.Heartbeat",
-		tracer.RPCMessageTypeSent,
-		tracer.InstanceKind.String(c.InsKind.String()),
-		tracer.InstanceID.String(c.InsID))
-	defer span.End()
-	buf := protocol.EncodeTraceBuffer(myCtx, buffer.NewNocopyBuffer(protocol.Heartbeat()))
-	defer buf.Release()
-	if _, err := c.conn.Write(buf.Bytes()); err != nil {
+	if _, err := c.conn.Write(protocol.Heartbeat()); err != nil {
 		log.Warnf("write heartbeat message error: %v", err)
 	}
 }

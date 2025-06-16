@@ -2,10 +2,13 @@ package gate
 
 import (
 	"context"
+	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/internal/transporter/internal/server"
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/trace"
 )
 
 type Server struct {
@@ -37,6 +40,15 @@ func (s *Server) init() {
 	s.RegisterHandler(route.Broadcast, s.broadcast)
 }
 
+// 携带链路追踪信息
+func (s *Server) traceBuffer(ctx context.Context, route uint8, seq uint64, buf buffer.Buffer) buffer.Buffer {
+	if !tracer.IsOpen {
+		return protocol.EncodeBuffer(protocol.DataBit, route, seq, nil, buf)
+	}
+	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
+	return protocol.EncodeBuffer(protocol.DataBit, route, seq, traceCtx, buf)
+}
+
 // 绑定用户
 func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, cid, uid, err := protocol.DecodeBindReq(data)
@@ -47,7 +59,7 @@ func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error
 	if err = s.provider.Bind(ctx, cid, uid); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeBindRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Bind, seq, protocol.EncodeBindRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -61,7 +73,7 @@ func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) err
 	if err = s.provider.Unbind(ctx, uid); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeUnbindRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Unbind, seq, protocol.EncodeUnbindRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -75,7 +87,7 @@ func (s *Server) getIP(ctx context.Context, conn *server.Conn, data []byte) erro
 	if ip, err := s.provider.GetIP(ctx, kind, target); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeGetIPRes(seq, codes.ErrorToCode(err), ip))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.GetIP, seq, protocol.EncodeGetIPRes(codes.ErrorToCode(err), ip)))
 	}
 }
 
@@ -89,7 +101,7 @@ func (s *Server) stat(ctx context.Context, conn *server.Conn, data []byte) error
 	if total, err := s.provider.Stat(ctx, kind); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeStatRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Stat, seq, protocol.EncodeStatRes(codes.ErrorToCode(err), uint64(total))))
 	}
 }
 
@@ -103,7 +115,7 @@ func (s *Server) isOnline(ctx context.Context, conn *server.Conn, data []byte) e
 	if isOnline, err := s.provider.IsOnline(ctx, kind, target); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeIsOnlineRes(seq, codes.ErrorToCode(err), isOnline))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.IsOnline, seq, protocol.EncodeIsOnlineRes(codes.ErrorToCode(err), isOnline)))
 	}
 }
 
@@ -117,7 +129,7 @@ func (s *Server) disconnect(ctx context.Context, conn *server.Conn, data []byte)
 	if err = s.provider.Disconnect(ctx, kind, target, force); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeDisconnectRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Disconnect, seq, protocol.EncodeDisconnectRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -131,7 +143,7 @@ func (s *Server) push(ctx context.Context, conn *server.Conn, data []byte) error
 	if err = s.provider.Push(ctx, kind, target, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodePushRes(seq, codes.ErrorToCode(err)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Push, seq, protocol.EncodePushRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -145,7 +157,7 @@ func (s *Server) multicast(ctx context.Context, conn *server.Conn, data []byte) 
 	if total, err := s.provider.Multicast(ctx, kind, targets, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeMulticastRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Multicast, seq, protocol.EncodeMulticastRes(codes.ErrorToCode(err), uint64(total))))
 	}
 }
 
@@ -159,30 +171,30 @@ func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) 
 	if total, err := s.provider.Broadcast(ctx, kind, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(ctx, protocol.EncodeBroadcastRes(seq, codes.ErrorToCode(err), uint64(total)))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Broadcast, seq, protocol.EncodeBroadcastRes(codes.ErrorToCode(err), uint64(total))))
 	}
 }
 
 // 获取状态
-func (s *Server) getState(conn *server.Conn, data []byte) error {
-	seq, err := protocol.DecodeGetStateReq(data)
+func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) error {
+	seq, err := protocol.DecodeSeq(buffer.NewReader(data))
 	if err != nil {
 		return err
 	}
 
-	state, err := s.provider.GetState()
+	state, err := s.provider.GetState(ctx)
 
-	return conn.Send(context.Background(), protocol.EncodeGetStateRes(seq, codes.ErrorToCode(err), state))
+	return conn.Send(ctx, s.traceBuffer(ctx, route.GetState, seq, protocol.EncodeGetStateRes(codes.ErrorToCode(err), state)))
 }
 
 // 设置状态
-func (s *Server) setState(conn *server.Conn, data []byte) error {
+func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) error {
 	seq, state, err := protocol.DecodeSetStateReq(data)
 	if err != nil {
 		return err
 	}
 
-	err = s.provider.SetState(state)
+	err = s.provider.SetState(ctx, state)
 
-	return conn.Send(context.Background(), protocol.EncodeSetStateRes(seq, codes.ErrorToCode(err)))
+	return conn.Send(ctx, s.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateRes(codes.ErrorToCode(err))))
 }

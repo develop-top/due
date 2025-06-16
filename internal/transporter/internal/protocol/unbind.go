@@ -4,44 +4,39 @@ import (
 	"encoding/binary"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"io"
 )
 
 const (
-	unbindReqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + b64
-	unbindResBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + defaultCodeBytes
+	unbindReqBytes = b64
+	unbindResBytes = defaultCodeBytes
 )
 
 // EncodeUnbindReq 编码解绑请求
-// 协议：size + header + route + seq + uid
-func EncodeUnbindReq(seq uint64, uid int64) buffer.Buffer {
+// 协议：uid
+func EncodeUnbindReq(uid int64) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(unbindReqBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(unbindReqBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Unbind)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteInt64s(binary.BigEndian, uid)
-
 	return buf
 }
 
 // DecodeUnbindReq 解码解绑请求
-// 协议：size + header + route + seq + uid
+// 协议：size + header + route + seq + [trace] + uid
 func DecodeUnbindReq(data []byte) (seq uint64, uid int64, err error) {
-	if len(data) != unbindReqBytes {
+	if len(data) < SizeHeadRouteSeqBytes+unbindReqBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes, io.SeekStart); err != nil {
+	seq, err = DecodeSeq(reader)
+	if err != nil {
 		return
 	}
 
-	if seq, err = reader.ReadUint64(binary.BigEndian); err != nil {
+	if _, err = reader.Seek(-unbindReqBytes, io.SeekEnd); err != nil {
 		return
 	}
 
@@ -53,30 +48,25 @@ func DecodeUnbindReq(data []byte) (seq uint64, uid int64, err error) {
 }
 
 // EncodeUnbindRes 编码解绑响应
-// 协议：size + header + route + seq + code
-func EncodeUnbindRes(seq uint64, code uint16) buffer.Buffer {
+// 协议：code
+func EncodeUnbindRes(code uint16) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(unbindResBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(unbindResBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Unbind)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint16s(binary.BigEndian, code)
-
 	return buf
 }
 
 // DecodeUnbindRes 解码解绑响应
-// 协议：size + header + route + seq + code
+// 协议：size + header + route + seq + [trace] + code
 func DecodeUnbindRes(data []byte) (code uint16, err error) {
-	if len(data) != unbindResBytes {
+	if len(data) < SizeHeadRouteSeqBytes+unbindResBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
 
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(-defaultCodeBytes, io.SeekEnd); err != nil {
+	if _, err = reader.Seek(-unbindResBytes, io.SeekEnd); err != nil {
 		return
 	}
 

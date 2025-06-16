@@ -2,31 +2,26 @@ package protocol
 
 import (
 	"encoding/binary"
+	"io"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
-	"io"
 )
 
 const (
-	handshakeReqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + b8
-	handshakeResBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + defaultCodeBytes
+	handshakeReqBytes = b8
+	handshakeResBytes = defaultCodeBytes
 )
 
 // EncodeHandshakeReq 编码握手请求
-// 协议：size + header + route + seq + ins kind + ins id
-func EncodeHandshakeReq(seq uint64, insKind cluster.Kind, insID string) buffer.Buffer {
+// 协议：ins kind + ins id
+func EncodeHandshakeReq(insKind cluster.Kind, insID string) buffer.Buffer {
 	size := handshakeReqBytes + len(insID)
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(size)
-	writer.WriteUint32s(binary.BigEndian, uint32(size-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Handshake)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint8s(uint8(insKind))
 	writer.WriteString(insID)
-
 	return buf
 }
 
@@ -50,7 +45,7 @@ func DecodeHandshakeReq(data []byte) (seq uint64, insKind cluster.Kind, insID st
 		insKind = cluster.Kind(k)
 	}
 
-	if insID, err = reader.ReadString(len(data) - handshakeReqBytes); err != nil {
+	if insID, err = reader.ReadString(len(data) - SizeHeadRouteSeqBytes - handshakeReqBytes); err != nil {
 		return
 	}
 
@@ -58,23 +53,18 @@ func DecodeHandshakeReq(data []byte) (seq uint64, insKind cluster.Kind, insID st
 }
 
 // EncodeHandshakeRes 编码握手响应
-// 协议：size + header + route + seq + code
-func EncodeHandshakeRes(seq uint64, code uint16) buffer.Buffer {
+// 协议：code
+func EncodeHandshakeRes(code uint16) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
-	writer := buf.Malloc(handshakeResBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(handshakeResBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Handshake)
-	writer.WriteUint64s(binary.BigEndian, seq)
+	writer := buf.Malloc(defaultCodeBytes)
 	writer.WriteUint16s(binary.BigEndian, code)
-
 	return buf
 }
 
 // DecodeHandshakeRes 解码握手响应
 // 协议：size + header + route + seq + code
 func DecodeHandshakeRes(data []byte) (code uint16, err error) {
-	if len(data) != handshakeResBytes {
+	if len(data) != SizeHeadRouteSeqBytes+handshakeResBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}

@@ -4,42 +4,48 @@ import (
 	"encoding/binary"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/session"
 	"io"
 )
 
 const (
-	pushReqBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + b8 + b64
-	pushResBytes = defaultSizeBytes + defaultHeaderBytes + defaultRouteBytes + defaultSeqBytes + defaultCodeBytes
+	pushReqBytes = b8 + b64
+	pushResBytes = defaultCodeBytes
 )
 
 // EncodePushReq 编码推送请求
-// 协议：size + header + route + seq + session kind + target + <message packet>
-func EncodePushReq(seq uint64, kind session.Kind, target int64, message buffer.Buffer) buffer.Buffer {
+// 协议：session kind + target + <message packet>
+func EncodePushReq(kind session.Kind, target int64, message buffer.Buffer) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(pushReqBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(pushReqBytes-defaultSizeBytes+message.Len()))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Push)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint8s(uint8(kind))
 	writer.WriteInt64s(binary.BigEndian, target)
 	buf.Mount(message)
-
 	return buf
 }
 
 // DecodePushReq 解码推送消息
-// 协议：size + header + route + seq + session kind + target + <message packet>
+// 协议：size + header + route + seq + [trace] + session kind + target + <message packet>
 func DecodePushReq(data []byte) (seq uint64, kind session.Kind, target int64, message []byte, err error) {
 	reader := buffer.NewReader(data)
 
-	if _, err = reader.Seek(defaultSizeBytes+defaultHeaderBytes+defaultRouteBytes, io.SeekStart); err != nil {
+	seq, err = DecodeSeq(reader)
+	if err != nil {
 		return
 	}
 
-	if seq, err = reader.ReadUint64(binary.BigEndian); err != nil {
+	var header uint8
+	header, err = DecodeHeader(reader)
+	if err != nil {
+		return
+	}
+
+	index := SizeHeadRouteSeqBytes
+	if header&TraceBit == TraceBit {
+		index += defaultTraceBytes
+	}
+
+	if _, err = reader.Seek(int64(index), io.SeekStart); err != nil {
 		return
 	}
 
@@ -54,29 +60,24 @@ func DecodePushReq(data []byte) (seq uint64, kind session.Kind, target int64, me
 		return
 	}
 
-	message = data[pushReqBytes:]
+	message = data[index+pushReqBytes:]
 
 	return
 }
 
 // EncodePushRes 编码推送响应
-// 协议：size + header + route + seq + code
-func EncodePushRes(seq uint64, code uint16) buffer.Buffer {
+// 协议：code
+func EncodePushRes(code uint16) buffer.Buffer {
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(pushResBytes)
-	writer.WriteUint32s(binary.BigEndian, uint32(pushResBytes-defaultSizeBytes))
-	writer.WriteUint8s(dataBit)
-	writer.WriteUint8s(route.Push)
-	writer.WriteUint64s(binary.BigEndian, seq)
 	writer.WriteUint16s(binary.BigEndian, code)
-
 	return buf
 }
 
 // DecodePushRes 解码推送响应
-// 协议：size + header + route + seq + code
+// 协议：size + header + route + seq + [trace] + code
 func DecodePushRes(data []byte) (code uint16, err error) {
-	if len(data) != pushResBytes {
+	if len(data) < SizeHeadRouteSeqBytes+pushResBytes {
 		err = errors.ErrInvalidMessage
 		return
 	}
