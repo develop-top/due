@@ -76,7 +76,6 @@ func FromContext(ctx context.Context) (tracer trace.Tracer) {
 	} else {
 		tracer = otel.Tracer(TraceName)
 	}
-
 	return
 }
 

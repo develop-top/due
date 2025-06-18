@@ -26,7 +26,7 @@ type chWrite struct {
 }
 
 type Client struct {
-	opts        *Options       // 配置
+	Opts        *Options       // 配置
 	chWrite     chan *chWrite  // 写入队列
 	connections []*Conn        // 连接
 	wg          sync.WaitGroup // 等待组
@@ -35,7 +35,7 @@ type Client struct {
 
 func NewClient(opts *Options) *Client {
 	c := &Client{}
-	c.opts = opts
+	c.Opts = opts
 	c.chWrite = make(chan *chWrite, 10240)
 	c.connections = make([]*Conn, 0, ordered+unordered)
 	c.init()
@@ -130,7 +130,7 @@ func (c *Client) wait() {
 		close(c.chWrite)
 	})
 
-	if c.opts.CloseHandler != nil {
-		c.opts.CloseHandler()
+	if c.Opts.CloseHandler != nil {
+		c.Opts.CloseHandler()
 	}
 }

@@ -10,7 +10,6 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/tracer"
-	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"sync/atomic"
@@ -37,20 +36,25 @@ func (c *Client) traceBuffer(ctx context.Context, routeID uint8, seq uint64, buf
 
 	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
 	buf = protocol.EncodeBuffer(protocol.DataBit, routeID, seq, traceCtx, buf)
-	myCtx, span := xtrace.StartRPCClientSpan(ctx, fmt.Sprintf("internal.RPCClient.%s", name),
-		append([]attribute.KeyValue{
-			tracer.RPCMessageTypeSent,
-			tracer.RPCMessageTypeKey.String(cluster.Node.String()),
-			tracer.RPCMessageIDKey.String(name),
-			tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
-		}, attr...)...)
+
+	myCtx, span := tracer.NewSpan(ctx, fmt.Sprintf("node.client.%s", name),
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			append([]attribute.KeyValue{
+				tracer.RPCMessageTypeSent,
+				tracer.RPCMessageIDKey.String(name),
+				tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
+				tracer.InstanceKind.String(c.cli.Opts.InsKind.String()),
+				tracer.InstanceID.String(c.cli.Opts.InsID),
+				tracer.ServerIP.String(c.cli.Opts.Addr),
+			}, attr...)...))
 
 	return myCtx, func() { span.End() }, buf
 }
 
 // Trigger 触发事件
 func (c *Client) Trigger(ctx context.Context, event cluster.Event, cid, uid int64) error {
-	ctx, end, buf := c.traceBuffer(ctx, route.Trigger, 0, protocol.EncodeTriggerReq(event, cid, uid))
+	ctx, end, buf := c.traceBuffer(ctx, route.Trigger, 0, protocol.EncodeTriggerReq(event, cid, uid), attribute.Key("event").String(event.String()))
 	defer end()
 	return c.cli.Send(ctx, buf)
 }

@@ -6,7 +6,6 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	route2 "github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/tracer"
-	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/trace"
 	"slices"
 	"testing"
@@ -68,7 +67,7 @@ func TestUnmarshalSpanContext2(t *testing.T) {
 
 func TestReadTraceMessage(t *testing.T) {
 	ctx := context.Background()
-	ctx, _ = xtrace.StartRPCClientSpan(ctx, "test")
+	ctx, _ = tracer.NewSpan(ctx, "test")
 
 	traceBytes := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
 

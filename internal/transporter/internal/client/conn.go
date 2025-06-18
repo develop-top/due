@@ -65,7 +65,7 @@ func (c *Conn) dial() {
 	)
 
 	for {
-		conn, err := net.DialTimeout("tcp", c.cli.opts.Addr, dialTimeout)
+		conn, err := net.DialTimeout("tcp", c.cli.Opts.Addr, dialTimeout)
 		if err != nil {
 			retry++
 
@@ -111,7 +111,7 @@ func (c *Conn) process(conn net.Conn) {
 
 	c.pending.store(seq, call)
 
-	buf := protocol.EncodeBuffer(protocol.DataBit, route.Handshake, seq, nil, protocol.EncodeHandshakeReq(c.cli.opts.InsKind, c.cli.opts.InsID))
+	buf := protocol.EncodeBuffer(protocol.DataBit, route.Handshake, seq, nil, protocol.EncodeHandshakeReq(c.cli.Opts.InsKind, c.cli.Opts.InsID))
 
 	defer buf.Release()
 

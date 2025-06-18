@@ -11,7 +11,6 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/session"
 	"github.com/develop-top/due/v2/tracer"
-	"github.com/develop-top/due/v2/utils/xtrace"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"sync/atomic"
@@ -39,13 +38,18 @@ func (c *Client) traceBuffer(ctx context.Context, routeID uint8, seq uint64, buf
 
 	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
 	buf = protocol.EncodeBuffer(protocol.DataBit, routeID, seq, traceCtx, buf)
-	myCtx, span := xtrace.StartRPCClientSpan(ctx, fmt.Sprintf("internal.RPCClient.%s", name),
-		append([]attribute.KeyValue{
-			tracer.RPCMessageTypeSent,
-			tracer.RPCMessageTypeKey.String(cluster.Gate.String()),
-			tracer.RPCMessageIDKey.String(name),
-			tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
-		}, attr...)...)
+
+	myCtx, span := tracer.NewSpan(ctx, fmt.Sprintf("gate.client.%s", name),
+		trace.WithSpanKind(trace.SpanKindClient),
+		trace.WithAttributes(
+			append([]attribute.KeyValue{
+				tracer.RPCMessageTypeSent,
+				tracer.RPCMessageIDKey.String(name),
+				tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
+				tracer.InstanceKind.String(c.cli.Opts.InsKind.String()),
+				tracer.InstanceID.String(c.cli.Opts.InsID),
+				tracer.ServerIP.String(c.cli.Opts.Addr),
+			}, attr...)...))
 
 	return myCtx, func() { span.End() }, buf
 }

@@ -2,12 +2,15 @@ package gate
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/internal/transporter/internal/server"
 	"github.com/develop-top/due/v2/tracer"
+	"github.com/develop-top/due/v2/utils/xtrace"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -49,8 +52,25 @@ func (s *Server) traceBuffer(ctx context.Context, route uint8, seq uint64, buf b
 	return protocol.EncodeBuffer(protocol.DataBit, route, seq, traceCtx, buf)
 }
 
+func (s *Server) startSpan(ctx context.Context, r uint8, attr ...attribute.KeyValue) (context.Context, trace.Span, func()) {
+	if !tracer.IsOpen {
+		return ctx, nil, func() {}
+	}
+
+	ctx, span := xtrace.StartRPCServerSpan(ctx, fmt.Sprintf("gate.server.%s", route.Name[r]),
+		append([]attribute.KeyValue{
+			tracer.RPCMessageTypeReceived,
+		}, attr...)...,
+	)
+
+	return ctx, span, func() { span.End() }
+}
+
 // 绑定用户
 func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Bind)
+	defer end()
+
 	seq, cid, uid, err := protocol.DecodeBindReq(data)
 	if err != nil {
 		return err
@@ -65,6 +85,9 @@ func (s *Server) bind(ctx context.Context, conn *server.Conn, data []byte) error
 
 // 解绑用户
 func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Unbind)
+	defer end()
+
 	seq, uid, err := protocol.DecodeUnbindReq(data)
 	if err != nil {
 		return err
@@ -79,6 +102,9 @@ func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) err
 
 // 获取IP地址
 func (s *Server) getIP(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.GetIP)
+	defer end()
+
 	seq, kind, target, err := protocol.DecodeGetIPReq(data)
 	if err != nil {
 		return err
@@ -93,6 +119,9 @@ func (s *Server) getIP(ctx context.Context, conn *server.Conn, data []byte) erro
 
 // 统计在线人数
 func (s *Server) stat(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Stat)
+	defer end()
+
 	seq, kind, err := protocol.DecodeStatReq(data)
 	if err != nil {
 		return err
@@ -107,6 +136,9 @@ func (s *Server) stat(ctx context.Context, conn *server.Conn, data []byte) error
 
 // 检测用户是否在线
 func (s *Server) isOnline(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.IsOnline)
+	defer end()
+
 	seq, kind, target, err := protocol.DecodeIsOnlineReq(data)
 	if err != nil {
 		return err
@@ -121,6 +153,9 @@ func (s *Server) isOnline(ctx context.Context, conn *server.Conn, data []byte) e
 
 // 断开连接
 func (s *Server) disconnect(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Disconnect)
+	defer end()
+
 	seq, kind, target, force, err := protocol.DecodeDisconnectReq(data)
 	if err != nil {
 		return err
@@ -135,6 +170,9 @@ func (s *Server) disconnect(ctx context.Context, conn *server.Conn, data []byte)
 
 // 推送单个消息
 func (s *Server) push(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Push)
+	defer end()
+
 	seq, kind, target, message, err := protocol.DecodePushReq(data)
 	if err != nil {
 		return err
@@ -149,6 +187,9 @@ func (s *Server) push(ctx context.Context, conn *server.Conn, data []byte) error
 
 // 推送组播消息
 func (s *Server) multicast(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Multicast)
+	defer end()
+
 	seq, kind, targets, message, err := protocol.DecodeMulticastReq(data)
 	if err != nil {
 		return err
@@ -163,6 +204,9 @@ func (s *Server) multicast(ctx context.Context, conn *server.Conn, data []byte) 
 
 // 推送广播消息
 func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Broadcast)
+	defer end()
+
 	seq, kind, message, err := protocol.DecodeBroadcastReq(data)
 	if err != nil {
 		return err
@@ -177,6 +221,9 @@ func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) 
 
 // 获取状态
 func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.GetState)
+	defer end()
+
 	seq, err := protocol.DecodeSeq(buffer.NewReader(data))
 	if err != nil {
 		return err
@@ -189,6 +236,9 @@ func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) e
 
 // 设置状态
 func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.SetState)
+	defer end()
+
 	seq, state, err := protocol.DecodeSetStateReq(data)
 	if err != nil {
 		return err
