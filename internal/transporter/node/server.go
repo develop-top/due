@@ -77,7 +77,7 @@ func (s *Server) trigger(ctx context.Context, conn *server.Conn, data []byte) er
 	}
 
 	if span != nil {
-		span.SetAttributes(attribute.Key("event").String(event.String()))
+		span.SetName(fmt.Sprintf("node.server.%v.%v", route.Name[route.Trigger], event.String()))
 	}
 
 	if conn.InsKind != cluster.Gate {
@@ -97,7 +97,7 @@ func (s *Server) trigger(ctx context.Context, conn *server.Conn, data []byte) er
 
 // 投递消息
 func (s *Server) deliver(ctx context.Context, conn *server.Conn, data []byte) error {
-	myCtx, _, end := s.startSpan(ctx, route.Deliver)
+	ctx, _, end := s.startSpan(ctx, route.Deliver)
 	defer end()
 
 	seq, cid, uid, message, err := protocol.DecodeDeliverReq(data)
@@ -119,10 +119,10 @@ func (s *Server) deliver(ctx context.Context, conn *server.Conn, data []byte) er
 		return errors.ErrIllegalRequest
 	}
 
-	if err = s.provider.Deliver(myCtx, gid, nid, cid, uid, message); seq == 0 {
+	if err = s.provider.Deliver(ctx, gid, nid, cid, uid, message); seq == 0 {
 		return err
 	} else {
-		return conn.Send(myCtx, s.traceBuffer(myCtx, route.Deliver, seq, protocol.EncodeDeliverRes(codes.ErrorToCode(err))))
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Deliver, seq, protocol.EncodeDeliverRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -143,12 +143,16 @@ func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) e
 
 // 设置状态
 func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) error {
-	ctx, _, end := s.startSpan(ctx, route.SetState)
+	ctx, span, end := s.startSpan(ctx, route.SetState)
 	defer end()
 
 	seq, state, err := protocol.DecodeSetStateReq(data)
 	if err != nil {
 		return err
+	}
+
+	if span != nil {
+		span.SetName(fmt.Sprintf("node.server.%v.%v", route.Name[route.SetState], state.String()))
 	}
 
 	err = s.provider.SetState(ctx, state)

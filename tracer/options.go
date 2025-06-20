@@ -17,6 +17,7 @@ const (
 	defaultSamplerKey   = "etc.opentracing.sampler"
 	defaultBatcherKey   = "etc.opentracing.batcher"
 	defaultDisableKey   = "etc.opentracing.disabled"
+	defaultDueReportKey = "etc.opentracing.dueReport"
 )
 
 var TraceName = "due" // 系统名称
@@ -40,7 +41,8 @@ type Options struct {
 	// OtlpHttpSecure represents the scheme to use for OTLP HTTP transport.
 	OtlpHttpSecure bool `json:",optional"`
 	// Disabled indicates whether StartAgent starts the agent.
-	Disabled bool `json:",optional"`
+	Disabled  bool `json:",optional"`
+	DueReport bool `json:",optional"`
 }
 
 func defaultOptions() *Options {
@@ -50,7 +52,8 @@ func defaultOptions() *Options {
 		Endpoint:  etc.Get(defaultEndpointKey, defaultEndpoint).String(),
 		Sampler:   etc.Get(defaultSamplerKey, defaultSampler).Float64(),
 		Batcher:   etc.Get(defaultBatcherKey, defaultBatcher).String(),
-		Disabled:  etc.Get(defaultDisableKey, true).Bool(), // 默认禁用
+		Disabled:  etc.Get(defaultDisableKey, true).Bool(),   // 默认禁用
+		DueReport: etc.Get(defaultDueReportKey, true).Bool(), // 上报due链路追踪数据
 	}
 }
 

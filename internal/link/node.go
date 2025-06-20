@@ -2,6 +2,7 @@ package link
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/endpoint"
 	"github.com/develop-top/due/v2/errors"
@@ -11,6 +12,9 @@ import (
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/registry"
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"time"
@@ -37,8 +41,28 @@ func NewNodeLinker(ctx context.Context, opts *Options) *NodeLinker {
 	return l
 }
 
+func (l *NodeLinker) startSpane(ctx context.Context, name string, attr ...attribute.KeyValue) (context.Context, trace.Span, func()) {
+	if !tracer.IsOpen || !tracer.IsReport {
+		return ctx, nil, func() {}
+	}
+
+	fullName := "nodeLinker"
+	if name != "" {
+		fullName = fullName + "." + name
+	}
+
+	ctx, span := tracer.NewSpan(ctx, fullName,
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(append([]attribute.KeyValue{}, attr...)...))
+
+	return ctx, span, func() { span.End() }
+}
+
 // Ask 检测用户是否在给定的节点上
 func (l *NodeLinker) Ask(ctx context.Context, uid int64, name, nid string) (string, bool, error) {
+	ctx, _, end := l.startSpane(ctx, "Ask")
+	defer end()
+
 	if l.opts.Locator == nil {
 		return "", false, errors.ErrNotFoundLocator
 	}
@@ -62,13 +86,19 @@ func (l *NodeLinker) Ask(ctx context.Context, uid int64, name, nid string) (stri
 }
 
 // Has 检测是否存在某个节点
-func (l *NodeLinker) Has(nid string) bool {
+func (l *NodeLinker) Has(ctx context.Context, nid string) bool {
+	ctx, _, end := l.startSpane(ctx, "Has")
+	defer end()
+
 	_, err := l.dispatcher.FindEndpoint(nid)
 	return err == nil
 }
 
 // Locate 定位用户所在节点
 func (l *NodeLinker) Locate(ctx context.Context, uid int64, name string) (string, error) {
+	ctx, _, end := l.startSpane(ctx, "Locate")
+	defer end()
+
 	if l.opts.Locator == nil {
 		return "", errors.ErrNotFoundLocator
 	}
@@ -96,6 +126,9 @@ func (l *NodeLinker) Locate(ctx context.Context, uid int64, name string) (string
 // 单个用户可以绑定到多个节点服务器上，相同名称的节点服务器只能绑定一个，多次绑定会到相同名称的节点服务器会覆盖之前的绑定。
 // 绑定操作会通过发布订阅方式同步到网关服务器和其他相关节点服务器上。
 func (l *NodeLinker) Bind(ctx context.Context, uid int64, name, nid string) error {
+	ctx, _, end := l.startSpane(ctx, "Bind")
+	defer end()
+
 	if l.opts.Locator == nil {
 		return errors.ErrNotFoundLocator
 	}
@@ -114,6 +147,9 @@ func (l *NodeLinker) Bind(ctx context.Context, uid int64, name, nid string) erro
 // 解绑时会对对应名称的节点服务器进行解绑，解绑时会对解绑节点ID进行校验，不匹配则解绑失败。
 // 解绑操作会通过发布订阅方式同步到网关服务器和其他相关节点服务器上。
 func (l *NodeLinker) Unbind(ctx context.Context, uid int64, name, nid string) error {
+	ctx, _, end := l.startSpane(ctx, "Unbind")
+	defer end()
+
 	if l.opts.Locator == nil {
 		return errors.ErrNotFoundLocator
 	}
@@ -130,6 +166,9 @@ func (l *NodeLinker) Unbind(ctx context.Context, uid int64, name, nid string) er
 
 // Deliver 投递消息给节点处理
 func (l *NodeLinker) Deliver(ctx context.Context, args *DeliverArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Deliver.%d", args.Route))
+	defer end()
+
 	var message []byte
 
 	switch msg := args.Message.(type) {
@@ -166,6 +205,9 @@ func (l *NodeLinker) Deliver(ctx context.Context, args *DeliverArgs) error {
 
 // Trigger 触发事件
 func (l *NodeLinker) Trigger(ctx context.Context, args *TriggerArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Trigger.%s", args.Event.String()))
+	defer end()
+
 	event, err := l.dispatcher.FindEvent(int(args.Event))
 	if err != nil {
 		return err
@@ -191,6 +233,9 @@ func (l *NodeLinker) Trigger(ctx context.Context, args *TriggerArgs) error {
 
 // FetchNodeList 拉取节点列表
 func (l *NodeLinker) FetchNodeList(ctx context.Context, states ...cluster.State) ([]*registry.ServiceInstance, error) {
+	ctx, _, end := l.startSpane(ctx, "FetchNodeList")
+	defer end()
+
 	services, err := l.opts.Registry.Services(ctx, cluster.Node.String())
 	if err != nil {
 		return nil, err
@@ -217,6 +262,9 @@ func (l *NodeLinker) FetchNodeList(ctx context.Context, states ...cluster.State)
 
 // GetState 获取节点状态
 func (l *NodeLinker) GetState(ctx context.Context, nid string) (cluster.State, error) {
+	ctx, _, end := l.startSpane(ctx, "GetState")
+	defer end()
+
 	client, err := l.doBuildClient(nid)
 	if err != nil {
 		return cluster.Shut, err
@@ -227,6 +275,9 @@ func (l *NodeLinker) GetState(ctx context.Context, nid string) (cluster.State, e
 
 // SetState 设置节点状态
 func (l *NodeLinker) SetState(ctx context.Context, nid string, state cluster.State) error {
+	ctx, _, end := l.startSpane(ctx, "SetState")
+	defer end()
+
 	client, err := l.doBuildClient(nid)
 	if err != nil {
 		return err

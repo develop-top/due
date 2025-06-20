@@ -176,8 +176,8 @@ func (p *Proxy) AskGate(ctx context.Context, gid string, uid int64) (string, boo
 }
 
 // HasGate 检测是否存在某个网关
-func (p *Proxy) HasGate(gid string) bool {
-	return p.gateLinker.Has(gid)
+func (p *Proxy) HasGate(ctx context.Context, gid string) bool {
+	return p.gateLinker.Has(ctx, gid)
 }
 
 // LocateNode 定位用户所在节点
@@ -191,8 +191,8 @@ func (p *Proxy) AskNode(ctx context.Context, uid int64, name, nid string) (strin
 }
 
 // HasNode 检测是否存在某个节点
-func (p *Proxy) HasNode(nid string) bool {
-	return p.nodeLinker.Has(nid)
+func (p *Proxy) HasNode(ctx context.Context, nid string) bool {
+	return p.nodeLinker.Has(ctx, nid)
 }
 
 // FetchGateList 拉取网关列表

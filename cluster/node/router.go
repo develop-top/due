@@ -2,6 +2,7 @@ package node
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/tracer"
@@ -57,7 +58,10 @@ func newRouter(node *Node) *Router {
 		routes:  make(map[int32]*routeEntity),
 		reqChan: make(chan *request, 10240),
 		preTraceHandler: func(req Context) {
-			spanCtx, span := tracer.NewSpan(req.Context(), "routerHandler",
+			if !tracer.IsOpen {
+				return
+			}
+			spanCtx, span := tracer.NewSpan(req.Context(), fmt.Sprintf("routeHandler.%v", req.Route()),
 				trace.WithSpanKind(trace.SpanKindInternal),
 				trace.WithAttributes(
 					tracer.RPCMessageIDKey.Int64(int64(req.Route())),
@@ -72,6 +76,9 @@ func newRouter(node *Node) *Router {
 			req.SetValue(SpanRouteHandleKey, span)
 		},
 		postTraceHandler: func(req Context) {
+			if !tracer.IsOpen {
+				return
+			}
 			val := req.GetValue(SpanRouteHandleKey)
 			if val != nil {
 				val.(trace.Span).End()

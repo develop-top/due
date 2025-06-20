@@ -2,6 +2,7 @@ package link
 
 import (
 	"context"
+	"fmt"
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/core/endpoint"
@@ -13,6 +14,9 @@ import (
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/session"
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"sync"
 	"sync/atomic"
@@ -38,8 +42,28 @@ func NewGateLinker(ctx context.Context, opts *Options) *GateLinker {
 	return l
 }
 
+func (l *GateLinker) startSpane(ctx context.Context, name string, attr ...attribute.KeyValue) (context.Context, trace.Span, func()) {
+	if !tracer.IsOpen || !tracer.IsReport {
+		return ctx, nil, func() {}
+	}
+
+	fullName := "gateLinker"
+	if name != "" {
+		fullName = fullName + "." + name
+	}
+
+	ctx, span := tracer.NewSpan(ctx, fullName,
+		trace.WithSpanKind(trace.SpanKindInternal),
+		trace.WithAttributes(append([]attribute.KeyValue{}, attr...)...))
+
+	return ctx, span, func() { span.End() }
+}
+
 // Ask 检测用户是否在给定的网关上
 func (l *GateLinker) Ask(ctx context.Context, gid string, uid int64) (string, bool, error) {
+	ctx, _, end := l.startSpane(ctx, "Ask")
+	defer end()
+
 	insID, err := l.Locate(ctx, uid)
 	if err != nil {
 		return "", false, err
@@ -49,13 +73,19 @@ func (l *GateLinker) Ask(ctx context.Context, gid string, uid int64) (string, bo
 }
 
 // Has 检测是否存在某个网关
-func (l *GateLinker) Has(gid string) bool {
+func (l *GateLinker) Has(ctx context.Context, gid string) bool {
+	_, _, end := l.startSpane(ctx, "Has")
+	defer end()
+
 	_, err := l.dispatcher.FindEndpoint(gid)
 	return err == nil
 }
 
 // Locate 定位用户所在网关
 func (l *GateLinker) Locate(ctx context.Context, uid int64) (string, error) {
+	ctx, _, end := l.startSpane(ctx, "Locate")
+	defer end()
+
 	if l.opts.Locator == nil {
 		return "", errors.ErrNotFoundLocator
 	}
@@ -82,6 +112,9 @@ func (l *GateLinker) Locate(ctx context.Context, uid int64) (string, error) {
 
 // FetchGateList 拉取网关列表
 func (l *GateLinker) FetchGateList(ctx context.Context, states ...cluster.State) ([]*registry.ServiceInstance, error) {
+	ctx, _, end := l.startSpane(ctx, "FetchGateList")
+	defer end()
+
 	services, err := l.opts.Registry.Services(ctx, cluster.Gate.String())
 	if err != nil {
 		return nil, err
@@ -108,6 +141,9 @@ func (l *GateLinker) FetchGateList(ctx context.Context, states ...cluster.State)
 
 // Bind 绑定网关
 func (l *GateLinker) Bind(ctx context.Context, gid string, cid, uid int64) error {
+	ctx, _, end := l.startSpane(ctx, "Bind")
+	defer end()
+
 	client, err := l.doBuildClient(gid)
 	if err != nil {
 		return err
@@ -125,6 +161,9 @@ func (l *GateLinker) Bind(ctx context.Context, gid string, cid, uid int64) error
 
 // Unbind 解绑网关
 func (l *GateLinker) Unbind(ctx context.Context, uid int64) error {
+	ctx, _, end := l.startSpane(ctx, "Unbind")
+	defer end()
+
 	_, err := l.doRPC(ctx, uid, func(client *gate.Client) (bool, interface{}, error) {
 		miss, err := client.Unbind(ctx, uid)
 		return miss, nil, err
@@ -140,6 +179,9 @@ func (l *GateLinker) Unbind(ctx context.Context, uid int64) error {
 
 // GetState 获取网关状态
 func (l *GateLinker) GetState(ctx context.Context, gid string) (cluster.State, error) {
+	ctx, _, end := l.startSpane(ctx, "GetState")
+	defer end()
+
 	client, err := l.doBuildClient(gid)
 	if err != nil {
 		return cluster.Shut, err
@@ -150,6 +192,9 @@ func (l *GateLinker) GetState(ctx context.Context, gid string) (cluster.State, e
 
 // SetState 设置网关状态
 func (l *GateLinker) SetState(ctx context.Context, gid string, state cluster.State) error {
+	ctx, _, end := l.startSpane(ctx, "SetState")
+	defer end()
+
 	client, err := l.doBuildClient(gid)
 	if err != nil {
 		return err
@@ -160,6 +205,9 @@ func (l *GateLinker) SetState(ctx context.Context, gid string, state cluster.Sta
 
 // GetIP 获取客户端IP
 func (l *GateLinker) GetIP(ctx context.Context, args *GetIPArgs) (string, error) {
+	ctx, _, end := l.startSpane(ctx, "GetIP")
+	defer end()
+
 	switch args.Kind {
 	case session.Conn:
 		return l.doDirectGetIP(ctx, args.GID, args.Kind, args.Target)
@@ -200,6 +248,9 @@ func (l *GateLinker) doIndirectGetIP(ctx context.Context, uid int64) (string, er
 
 // Stat 统计会话总数
 func (l *GateLinker) Stat(ctx context.Context, kind session.Kind) (int64, error) {
+	ctx, _, end := l.startSpane(ctx, "Stat")
+	defer end()
+
 	total := int64(0)
 	eg, ctx := errgroup.WithContext(ctx)
 
@@ -234,6 +285,9 @@ func (l *GateLinker) Stat(ctx context.Context, kind session.Kind) (int64, error)
 
 // IsOnline 检测是否在线
 func (l *GateLinker) IsOnline(ctx context.Context, args *IsOnlineArgs) (bool, error) {
+	ctx, _, end := l.startSpane(ctx, "IsOnline")
+	defer end()
+
 	switch args.Kind {
 	case session.Conn:
 		return l.doDirectIsOnline(ctx, args)
@@ -270,6 +324,9 @@ func (l *GateLinker) doIndirectIsOnline(ctx context.Context, args *IsOnlineArgs)
 
 // Disconnect 断开连接
 func (l *GateLinker) Disconnect(ctx context.Context, args *DisconnectArgs) error {
+	ctx, _, end := l.startSpane(ctx, "Disconnect")
+	defer end()
+
 	switch args.Kind {
 	case session.Conn:
 		return l.doDirectDisconnect(ctx, args)
@@ -305,6 +362,13 @@ func (l *GateLinker) doIndirectDisconnect(ctx context.Context, uid int64, force 
 
 // Push 推送消息
 func (l *GateLinker) Push(ctx context.Context, args *PushArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Push.%s.%d", args.Kind.String(), args.Message.Route),
+		tracer.GateID.String(args.GID),
+		attribute.Key("kind").String(args.Kind.String()),
+		attribute.Key("target").Int64(args.Target),
+		attribute.Key("route").Int64(int64(args.Message.Route)))
+	defer end()
+
 	switch args.Kind {
 	case session.Conn:
 		return l.doDirectPush(ctx, args)
@@ -350,6 +414,13 @@ func (l *GateLinker) doIndirectPush(ctx context.Context, args *PushArgs) error {
 
 // Multicast 推送组播消息
 func (l *GateLinker) Multicast(ctx context.Context, args *MulticastArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Multicast.%s.%d", args.Kind.String(), args.Message.Route),
+		tracer.GateID.String(args.GID),
+		attribute.Key("kind").String(args.Kind.String()),
+		attribute.Key("target").Int64Slice(args.Targets),
+		attribute.Key("route").Int64(int64(args.Message.Route)))
+	defer end()
+
 	switch args.Kind {
 	case session.Conn:
 		return l.doDirectMulticast(ctx, args)
@@ -421,6 +492,11 @@ func (l *GateLinker) doIndirectMulticast(ctx context.Context, args *MulticastArg
 
 // Broadcast 推送广播消息
 func (l *GateLinker) Broadcast(ctx context.Context, args *BroadcastArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Broadcast.%s.%d", args.Kind.String(), args.Message.Route),
+		attribute.Key("kind").String(args.Kind.String()),
+		attribute.Key("route").Int64(int64(args.Message.Route)))
+	defer end()
+
 	buf, err := l.PackBuffer(args.Message.Data, true)
 	if err != nil {
 		return err

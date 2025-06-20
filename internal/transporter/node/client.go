@@ -27,41 +27,46 @@ func NewClient(cli *client.Client) *Client {
 }
 
 func (c *Client) traceBuffer(ctx context.Context, routeID uint8, seq uint64, buf buffer.Buffer, attr ...attribute.KeyValue) (
-	context.Context, func(), buffer.Buffer) {
+	context.Context, trace.Span, func(), buffer.Buffer) {
 	if !tracer.IsOpen {
-		return ctx, func() {}, protocol.EncodeBuffer(protocol.DataBit, routeID, seq, nil, buf)
+		return ctx, nil, func() {}, protocol.EncodeBuffer(protocol.DataBit, routeID, seq, nil, buf)
 	}
 
-	name := route.Name[routeID]
+	routeName := route.Name[routeID]
 
 	traceCtx := protocol.MarshalSpanContext(trace.SpanContextFromContext(ctx))
 	buf = protocol.EncodeBuffer(protocol.DataBit, routeID, seq, traceCtx, buf)
 
-	myCtx, span := tracer.NewSpan(ctx, fmt.Sprintf("node.client.%s", name),
+	myCtx, span := tracer.NewSpan(ctx, fmt.Sprintf("node.client.%s", routeName),
 		trace.WithSpanKind(trace.SpanKindClient),
 		trace.WithAttributes(
 			append([]attribute.KeyValue{
 				tracer.RPCMessageTypeSent,
-				tracer.RPCMessageIDKey.String(name),
+				tracer.RPCMessageIDKey.String(routeName),
 				tracer.RPCMessageCompressedSizeKey.Int(buf.Len()),
 				tracer.InstanceKind.String(c.cli.Opts.InsKind.String()),
 				tracer.InstanceID.String(c.cli.Opts.InsID),
 				tracer.ServerIP.String(c.cli.Opts.Addr),
 			}, attr...)...))
 
-	return myCtx, func() { span.End() }, buf
+	return myCtx, span, func() { span.End() }, buf
 }
 
 // Trigger 触发事件
 func (c *Client) Trigger(ctx context.Context, event cluster.Event, cid, uid int64) error {
-	ctx, end, buf := c.traceBuffer(ctx, route.Trigger, 0, protocol.EncodeTriggerReq(event, cid, uid), attribute.Key("event").String(event.String()))
+	ctx, span, end, buf := c.traceBuffer(ctx, route.Trigger, 0, protocol.EncodeTriggerReq(event, cid, uid))
 	defer end()
+
+	if span != nil {
+		span.SetName(fmt.Sprintf("node.client.%s.%s", route.Name[route.Trigger], event.String()))
+	}
+
 	return c.cli.Send(ctx, buf)
 }
 
 // Deliver 投递消息
 func (c *Client) Deliver(ctx context.Context, cid, uid int64, message []byte) error {
-	ctx, end, buf := c.traceBuffer(ctx, route.Deliver, 0, protocol.EncodeDeliverReq(cid, uid, message))
+	ctx, _, end, buf := c.traceBuffer(ctx, route.Deliver, 0, protocol.EncodeDeliverReq(cid, uid, message))
 	defer end()
 	return c.cli.Send(ctx, buf, cid)
 }
@@ -70,7 +75,7 @@ func (c *Client) Deliver(ctx context.Context, cid, uid int64, message []byte) er
 func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 	seq := c.doGenSequence()
 
-	ctx, end, buf := c.traceBuffer(ctx, route.GetState, seq, nil)
+	ctx, _, end, buf := c.traceBuffer(ctx, route.GetState, seq, nil)
 	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
@@ -90,7 +95,7 @@ func (c *Client) GetState(ctx context.Context) (cluster.State, error) {
 func (c *Client) SetState(ctx context.Context, state cluster.State) error {
 	seq := c.doGenSequence()
 
-	ctx, end, buf := c.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateReq(state))
+	ctx, _, end, buf := c.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateReq(state))
 	defer end()
 
 	res, err := c.cli.Call(ctx, seq, buf)
