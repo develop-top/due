@@ -26,6 +26,8 @@ const (
 	defaultDialTimeoutKey = "etc.config.etcd.dialTimeout"
 	defaultPathKey        = "etc.config.etcd.path"
 	defaultModeKey        = "etc.config.etcd.mode"
+	defaultUser           = "etc.config.etcd.username"
+	defaultPassword       = "etc.config.etcd.password"
 )
 
 type Option func(o *options)
@@ -50,6 +52,12 @@ type options struct {
 	// 读写模式
 	// 支持read-only、write-only和read-write三种模式，默认为read-only模式
 	mode config.Mode
+
+	// 用户名
+	username string
+
+	// 密码
+	password string
 }
 
 func defaultOptions() *options {
@@ -58,6 +66,8 @@ func defaultOptions() *options {
 		dialTimeout: etc.Get(defaultDialTimeoutKey, defaultDialTimeout).Duration(),
 		path:        etc.Get(defaultPathKey, defaultPath).String(),
 		mode:        config.Mode(etc.Get(defaultModeKey, defaultMode).String()),
+		username:    etc.Get(defaultUser).String(),
+		password:    etc.Get(defaultPassword).String(),
 	}
 }
 
