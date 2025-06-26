@@ -8,8 +8,9 @@ import (
 )
 
 const (
-	Conn Kind = iota + 1 // 连接SESSION
-	User                 // 用户SESSION
+	Conn  Kind = iota + 1 // 连接SESSION
+	User                  // 用户SESSION
+	Group                 // 组SESSION;组播(Multicast),广播(Broadcast)可用
 )
 
 type Kind int
@@ -20,21 +21,27 @@ func (k Kind) String() string {
 		return "conn"
 	case User:
 		return "user"
+	case Group:
+		return "group"
 	}
 
 	return ""
 }
 
 type Session struct {
-	rw    sync.RWMutex           // 读写锁
-	conns map[int64]network.Conn // 连接会话（连接ID -> network.Conn）
-	users map[int64]network.Conn // 用户会话（用户ID -> network.Conn）
+	rw         sync.RWMutex                     // 读写锁
+	conns      map[int64]network.Conn           // 连接会话（连接ID -> network.Conn）
+	users      map[int64]network.Conn           // 用户会话（用户ID -> network.Conn）
+	groups     map[int64]network.Conn           // 组会话（连接ID -> network.Conn）
+	groupConns map[int64]map[int64]network.Conn // 自定义分组会话（组ID -> 连接ID -> network.Conn）
 }
 
 func NewSession() *Session {
 	return &Session{
-		conns: make(map[int64]network.Conn),
-		users: make(map[int64]network.Conn),
+		conns:      make(map[int64]network.Conn),
+		users:      make(map[int64]network.Conn),
+		groups:     make(map[int64]network.Conn),
+		groupConns: make(map[int64]map[int64]network.Conn),
 	}
 }
 
@@ -43,12 +50,22 @@ func (s *Session) AddConn(conn network.Conn) {
 	s.rw.Lock()
 	defer s.rw.Unlock()
 
-	cid, uid := conn.ID(), conn.UID()
+	cid, uid, groups := conn.ID(), conn.UID(), conn.Groups()
 
 	s.conns[cid] = conn
 
 	if uid != 0 {
 		s.users[uid] = conn
+	}
+
+	for group := range groups {
+		m, ok := s.groupConns[group]
+		if !ok {
+			m = make(map[int64]network.Conn)
+			s.groupConns[group] = m
+		}
+		m[cid] = conn
+		s.groups[cid] = conn
 	}
 }
 
@@ -57,13 +74,22 @@ func (s *Session) RemConn(conn network.Conn) {
 	s.rw.Lock()
 	defer s.rw.Unlock()
 
-	cid, uid := conn.ID(), conn.UID()
+	cid, uid, groups := conn.ID(), conn.UID(), conn.Groups()
 
 	delete(s.conns, cid)
 
 	if uid != 0 {
 		delete(s.users, uid)
 	}
+
+	for group := range groups {
+		delete(s.groupConns[group], cid)
+		if len(s.groupConns[group]) == 0 {
+			delete(s.groupConns, group)
+		}
+	}
+
+	delete(s.groups, cid)
 }
 
 // Has 是否存在会话
@@ -76,6 +102,8 @@ func (s *Session) Has(kind Kind, target int64) (ok bool, err error) {
 		_, ok = s.conns[target]
 	case User:
 		_, ok = s.users[target]
+	case Group:
+		_, ok = s.groupConns[target]
 	default:
 		err = errors.ErrInvalidSessionKind
 	}
@@ -124,6 +152,70 @@ func (s *Session) Unbind(uid int64) (int64, error) {
 	delete(s.users, uid)
 
 	return conn.ID(), nil
+}
+
+// BindGroups 绑定组
+func (s *Session) BindGroups(cid int64, groups []int64) error {
+	s.rw.Lock()
+	defer s.rw.Unlock()
+
+	conn, err := s.conn(Conn, cid)
+	if err != nil {
+		return err
+	}
+
+	for _, group := range groups {
+		if _, ok := conn.Groups()[group]; ok {
+			continue
+		}
+		m, ok := s.groupConns[group]
+		if !ok {
+			m = make(map[int64]network.Conn)
+			s.groupConns[group] = m
+		}
+		m[cid] = conn
+		s.groups[cid] = conn
+		conn.BindGroup(group)
+	}
+
+	return nil
+}
+
+// UnbindGroups 解绑组
+// groups 解绑某些组，不传参数表示解绑所有组
+func (s *Session) UnbindGroups(cid int64, groups ...int64) error {
+	s.rw.Lock()
+	defer s.rw.Unlock()
+
+	conn, err := s.conn(Conn, cid)
+	if err != nil {
+		return err
+	}
+
+	f := func(group int64) {
+		if _, ok := conn.Groups()[group]; ok {
+			delete(s.groupConns[group], cid)
+			if len(s.groupConns[group]) == 0 {
+				delete(s.groupConns, group)
+			}
+			conn.UnbindGroup(group)
+			if len(conn.Groups()) == 0 {
+				delete(s.groups, cid)
+			}
+		}
+	}
+
+	if len(groups) == 0 {
+		for group := range conn.Groups() {
+			f(group)
+		}
+	} else {
+		for _, group := range groups {
+			f(group)
+		}
+	}
+
+	return nil
 }
 
 // LocalIP 获取本地IP
@@ -196,12 +288,25 @@ func (s *Session) Send(kind Kind, target int64, msg []byte) error {
 	s.rw.RLock()
 	defer s.rw.RUnlock()
 
-	conn, err := s.conn(kind, target)
-	if err != nil {
-		return err
-	}
+	switch kind {
+	case Conn, User:
+		conn, err := s.conn(kind, target)
+		if err != nil {
+			return err
+		}
 
-	return conn.Send(msg)
+		return conn.Send(msg)
+
+	case Group:
+		m, ok := s.groupConns[target]
+		if !ok {
+			return errors.ErrNotFoundSession
+		}
+		for _, conn := range m {
+			_ = conn.Send(msg)
+		}
+	}
+	return nil
 }
 
 // Push 推送消息（异步）
@@ -209,12 +314,25 @@ func (s *Session) Push(kind Kind, target int64, msg []byte) error {
 	s.rw.RLock()
 	defer s.rw.RUnlock()
 
-	conn, err := s.conn(kind, target)
-	if err != nil {
-		return err
-	}
+	switch kind {
+	case Conn, User:
+		conn, err := s.conn(kind, target)
+		if err != nil {
+			return err
+		}
 
-	return conn.Push(msg)
+		return conn.Push(msg)
+
+	case Group:
+		m, ok := s.groupConns[target]
+		if !ok {
+			return errors.ErrNotFoundSession
+		}
+		for _, conn := range m {
+			_ = conn.Push(msg)
+		}
+	}
+	return nil
 }
 
 // Multicast 推送组播消息（异步）
@@ -225,6 +343,24 @@ func (s *Session) Multicast(kind Kind, targets []int64, msg []byte) (n int64, er
 
 	s.rw.RLock()
 	defer s.rw.RUnlock()
+
+	if kind == Group {
+		conns := make(map[int64]struct{})
+		for _, target := range targets {
+			m, ok := s.groupConns[target]
+			if ok {
+				for id, conn := range m {
+					if _, ok = conns[id]; !ok {
+						conns[id] = struct{}{}
+						if conn.Push(msg) == nil {
+							n++
+						}
+					}
+				}
+			}
+		}
+		return
+	}
 
 	var conns map[int64]network.Conn
 	switch kind {
@@ -261,6 +397,8 @@ func (s *Session) Broadcast(kind Kind, msg []byte) (n int64, err error) {
 		conns = s.conns
 	case User:
 		conns = s.users
+	case Group:
+		conns = s.groups
 	default:
 		err = errors.ErrInvalidSessionKind
 		return
@@ -285,6 +423,8 @@ func (s *Session) Stat(kind Kind) (int64, error) {
 		return int64(len(s.conns)), nil
 	case User:
 		return int64(len(s.users)), nil
+	case Group:
+		return int64(len(s.groups)), nil
 	default:
 		return 0, errors.ErrInvalidSessionKind
 	}

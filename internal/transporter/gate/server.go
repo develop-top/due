@@ -34,6 +34,8 @@ func NewServer(addr string, provider Provider) (*Server, error) {
 func (s *Server) init() {
 	s.RegisterHandler(route.Bind, s.bind)
 	s.RegisterHandler(route.Unbind, s.unbind)
+	s.RegisterHandler(route.BindGroups, s.bindGroups)
+	s.RegisterHandler(route.UnbindGroups, s.unbindGroups)
 	s.RegisterHandler(route.GetIP, s.getIP)
 	s.RegisterHandler(route.Stat, s.stat)
 	s.RegisterHandler(route.IsOnline, s.isOnline)
@@ -97,6 +99,40 @@ func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) err
 		return err
 	} else {
 		return conn.Send(ctx, s.traceBuffer(ctx, route.Unbind, seq, protocol.EncodeUnbindRes(codes.ErrorToCode(err))))
+	}
+}
+
+// 绑定用户所在组
+func (s *Server) bindGroups(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.BindGroups)
+	defer end()
+
+	seq, cid, groups, err := protocol.DecodeBindGroupsReq(data)
+	if err != nil {
+		return err
+	}
+
+	if err = s.provider.BindGroups(ctx, cid, groups); seq == 0 {
+		return err
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.BindGroups, seq, protocol.EncodeBindGroupsRes(codes.ErrorToCode(err))))
+	}
+}
+
+// 解绑用户所在组
+func (s *Server) unbindGroups(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.UnbindGroups)
+	defer end()
+
+	seq, cid, groups, err := protocol.DecodeUnbindGroupsReq(data)
+	if err != nil {
+		return err
+	}
+
+	if err = s.provider.UnbindGroups(ctx, cid, groups...); seq == 0 {
+		return err
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.UnbindGroups, seq, protocol.EncodeUnbindGroupsRes(codes.ErrorToCode(err))))
 	}
 }
 

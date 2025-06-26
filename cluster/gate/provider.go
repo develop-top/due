@@ -46,6 +46,35 @@ func (p *provider) Unbind(ctx context.Context, uid int64) error {
 	return p.gate.proxy.unbindGate(ctx, cid, uid)
 }
 
+// BindGroups 绑定用户所在组
+func (p *provider) BindGroups(ctx context.Context, cid int64, groups []int64) error {
+	if cid <= 0 {
+		return errors.ErrInvalidArgument
+	}
+
+	err := p.gate.session.BindGroups(cid, groups)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
+// UnbindGroups 解绑用户所在组
+// groups 解绑某些组，不传表示解绑所有组
+func (p *provider) UnbindGroups(ctx context.Context, cid int64, groups ...int64) error {
+	if cid <= 0 {
+		return errors.ErrInvalidArgument
+	}
+
+	err := p.gate.session.UnbindGroups(cid, groups...)
+	if err != nil {
+		return err
+	}
+
+	return err
+}
+
 // GetIP 获取客户端IP地址
 func (p *provider) GetIP(ctx context.Context, kind session.Kind, target int64) (string, error) {
 	return p.gate.session.RemoteIP(kind, target)

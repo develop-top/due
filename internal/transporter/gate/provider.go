@@ -11,6 +11,11 @@ type Provider interface {
 	Bind(ctx context.Context, cid, uid int64) error
 	// Unbind 解绑用户与网关间的关系
 	Unbind(ctx context.Context, uid int64) error
+	// BindGroups 绑定用户所在组
+	BindGroups(ctx context.Context, cid int64, groups []int64) error
+	// UnbindGroups 解绑用户所在组
+	// groups 解绑某些组，不传表示解绑所有组
+	UnbindGroups(ctx context.Context, cid int64, groups ...int64) error
 	// GetIP 获取客户端IP地址
 	GetIP(ctx context.Context, kind session.Kind, target int64) (ip string, err error)
 	// IsOnline 检测是否在线

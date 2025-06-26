@@ -64,6 +64,11 @@ type Context interface {
 	BindGate(uid ...int64) error
 	// UnbindGate 解绑网关
 	UnbindGate(uid ...int64) error
+	// BindGroups 绑定用户组
+	BindGroups(groups ...int64) error
+	// UnbindGroups 解绑用户组
+	// groups 解绑某些组，不传表示解绑所有组
+	UnbindGroups(groups ...int64) error
 	// BindNode 绑定节点
 	BindNode(uid ...int64) error
 	// UnbindNode 解绑节点

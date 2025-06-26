@@ -4,6 +4,7 @@ import (
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/network/common"
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"github.com/develop-top/due/v2/utils/xnet"
@@ -16,6 +17,7 @@ import (
 )
 
 type clientConn struct {
+	*common.ConnGroup
 	rw                sync.RWMutex    // 锁
 	id                int64           // 连接ID
 	uid               int64           // 用户ID
@@ -33,6 +35,7 @@ var _ network.Conn = &clientConn{}
 
 func newClientConn(id int64, conn *websocket.Conn, client *client) network.Conn {
 	c := &clientConn{
+		ConnGroup:         common.NewConnGroup(),
 		id:                id,
 		conn:              conn,
 		state:             int32(network.ConnOpened),

@@ -237,6 +237,17 @@ func (r *request) UnbindGate(uid ...int64) error {
 	}
 }
 
+// BindGroups 绑定用户组
+func (r *request) BindGroups(groups ...int64) error {
+	return r.node.proxy.BindGroups(r.ctx, r.gid, r.cid, groups)
+}
+
+// UnbindGroups 解绑用户组
+// groups 解绑某些组，不传表示解绑所有组
+func (r *request) UnbindGroups(groups ...int64) error {
+	return r.node.proxy.UnbindGroups(r.ctx, r.gid, r.cid, groups...)
+}
+
 // BindNode 绑定节点
 func (r *request) BindNode(uid ...int64) error {
 	switch {

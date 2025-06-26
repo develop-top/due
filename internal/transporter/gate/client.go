@@ -94,6 +94,46 @@ func (c *Client) Unbind(ctx context.Context, uid int64) (bool, error) {
 	return code == codes.NotFoundSession, nil
 }
 
+// BindGroups 绑定用户组
+func (c *Client) BindGroups(ctx context.Context, cid int64, groups []int64) error {
+	seq := c.doGenSequence()
+
+	ctx, end, buf := c.traceBuffer(ctx, route.BindGroups, seq, protocol.EncodeBindGroupsReq(cid, groups))
+	defer end()
+
+	res, err := c.cli.Call(ctx, seq, buf)
+	if err != nil {
+		return err
+	}
+
+	_, err = protocol.DecodeBindGroupsRes(res)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UnbindGroups 解绑用户组
+func (c *Client) UnbindGroups(ctx context.Context, cid int64, groups ...int64) error {
+	seq := c.doGenSequence()
+
+	ctx, end, buf := c.traceBuffer(ctx, route.UnbindGroups, seq, protocol.EncodeUnbindGroupsReq(cid, groups))
+	defer end()
+
+	res, err := c.cli.Call(ctx, seq, buf)
+	if err != nil {
+		return err
+	}
+
+	_, err = protocol.DecodeUnbindGroupsRes(res)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetIP 获取客户端IP
 func (c *Client) GetIP(ctx context.Context, kind session.Kind, target int64) (string, bool, error) {
 	seq := c.doGenSequence()

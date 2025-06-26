@@ -18,7 +18,7 @@ const (
 // EncodeMulticastReq 编码组播请求（最多组播65535个对象）
 // 协议：session kind + count + targets + <message packet>
 func EncodeMulticastReq(kind session.Kind, targets []int64, message buffer.Buffer) buffer.Buffer {
-	size := multicastReqBytes + len(targets)*8
+	size := multicastReqBytes + len(targets)*b64
 	buf := buffer.NewNocopyBuffer()
 	writer := buf.Malloc(size)
 	writer.WriteUint8s(uint8(kind))

@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/network/common"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"net"
 	"reflect"
@@ -20,7 +21,11 @@ type serverConnMgr struct {
 func newServerConnMgr(server *server) *serverConnMgr {
 	cm := &serverConnMgr{}
 	cm.server = server
-	cm.pool = sync.Pool{New: func() interface{} { return &serverConn{} }}
+	cm.pool = sync.Pool{New: func() interface{} {
+		return &serverConn{
+			ConnGroup: common.NewConnGroup(),
+		}
+	}}
 	cm.partitions = make([]*partition, 100)
 
 	for i := 0; i < len(cm.partitions); i++ {

@@ -177,6 +177,42 @@ func (l *GateLinker) Unbind(ctx context.Context, uid int64) error {
 	return nil
 }
 
+// BindGroups 绑定用户组
+func (l *GateLinker) BindGroups(ctx context.Context, gid string, cid int64, groups []int64) error {
+	ctx, _, end := l.startSpane(ctx, "BindGroups")
+	defer end()
+
+	client, err := l.doBuildClient(gid)
+	if err != nil {
+		return err
+	}
+
+	err = client.BindGroups(ctx, cid, groups)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UnbindGroups 解绑用户组
+func (l *GateLinker) UnbindGroups(ctx context.Context, gid string, cid int64, groups ...int64) error {
+	ctx, _, end := l.startSpane(ctx, "UnbindGroups")
+	defer end()
+
+	client, err := l.doBuildClient(gid)
+	if err != nil {
+		return err
+	}
+
+	err = client.UnbindGroups(ctx, cid, groups...)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GetState 获取网关状态
 func (l *GateLinker) GetState(ctx context.Context, gid string) (cluster.State, error) {
 	ctx, _, end := l.startSpane(ctx, "GetState")
@@ -430,6 +466,13 @@ func (l *GateLinker) Multicast(ctx context.Context, args *MulticastArgs) error {
 		} else {
 			return l.doDirectMulticast(ctx, args)
 		}
+	case session.Group:
+		if args.GID == "" {
+			return l.broadcast(ctx, args.Kind, args.Message)
+		} else {
+			return l.doDirectMulticast(ctx, args)
+		}
+
 	default:
 		return errors.ErrInvalidSessionKind
 	}
@@ -490,14 +533,8 @@ func (l *GateLinker) doIndirectMulticast(ctx context.Context, args *MulticastArg
 	return eg.Wait()
 }
 
-// Broadcast 推送广播消息
-func (l *GateLinker) Broadcast(ctx context.Context, args *BroadcastArgs) error {
-	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Broadcast.%s.%d", args.Kind.String(), args.Message.Route),
-		attribute.Key("kind").String(args.Kind.String()),
-		attribute.Key("route").Int64(int64(args.Message.Route)))
-	defer end()
-
-	buf, err := l.PackBuffer(args.Message.Data, true)
+func (l *GateLinker) broadcast(ctx context.Context, kind session.Kind, msg *Message) error {
+	buf, err := l.PackBuffer(msg.Data, true)
 	if err != nil {
 		return err
 	}
@@ -507,8 +544,8 @@ func (l *GateLinker) Broadcast(ctx context.Context, args *BroadcastArgs) error {
 	l.dispatcher.IterateEndpoint(func(_ string, ep *endpoint.Endpoint) bool {
 		eg.Go(func() error {
 			message, err := packet.PackBuffer(&packet.Message{
-				Seq:    args.Message.Seq,
-				Route:  args.Message.Route,
+				Seq:    msg.Seq,
+				Route:  msg.Route,
 				Buffer: buf,
 			})
 			if err != nil {
@@ -520,13 +557,23 @@ func (l *GateLinker) Broadcast(ctx context.Context, args *BroadcastArgs) error {
 				return err
 			}
 
-			return client.Broadcast(ctx, args.Kind, message)
+			return client.Broadcast(ctx, kind, message)
 		})
 
 		return true
 	})
 
 	return eg.Wait()
+}
+
+// Broadcast 推送广播消息
+func (l *GateLinker) Broadcast(ctx context.Context, args *BroadcastArgs) error {
+	ctx, _, end := l.startSpane(ctx, fmt.Sprintf("Broadcast.%s.%d", args.Kind.String(), args.Message.Route),
+		attribute.Key("kind").String(args.Kind.String()),
+		attribute.Key("route").Int64(int64(args.Message.Route)))
+	defer end()
+
+	return l.broadcast(ctx, args.Kind, args.Message)
 }
 
 // 执行RPC调用

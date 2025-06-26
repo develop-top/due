@@ -36,6 +36,17 @@ func (p *provider) Unbind(ctx context.Context, uid int64) error {
 	return nil
 }
 
+// BindGroups 绑定用户所在组
+func (p *provider) BindGroups(ctx context.Context, cid int64, groups []int64) error {
+	return nil
+}
+
+// UnbindGroups 解绑用户所在组
+// groups 解绑某些组，不传表示解绑所有组
+func (p *provider) UnbindGroups(ctx context.Context, cid int64, groups ...int64) error {
+	return nil
+}
+
 // GetIP 获取客户端IP地址
 func (p *provider) GetIP(ctx context.Context, kind session.Kind, target int64) (ip string, err error) {
 	fmt.Println(kind, target)
@@ -76,11 +87,11 @@ func (p *provider) Disconnect(ctx context.Context, kind session.Kind, target int
 }
 
 // GetState 获取状态
-func (p *provider) GetState() (cluster.State, error) {
+func (p *provider) GetState(ctx context.Context) (cluster.State, error) {
 	return cluster.Work, nil
 }
 
 // SetState 设置状态
-func (p *provider) SetState(state cluster.State) error {
+func (p *provider) SetState(ctx context.Context, state cluster.State) error {
 	return nil
 }

@@ -29,6 +29,12 @@ type (
 		Bind(uid int64)
 		// Unbind 解绑用户ID
 		Unbind()
+		// Groups 所在组
+		Groups() map[int64]struct{}
+		// BindGroup 绑定组
+		BindGroup(group int64)
+		// UnbindGroup 解绑组
+		UnbindGroup(group int64)
 		// Send 发送消息（同步）
 		Send(msg []byte) error
 		// Push 发送消息（异步）

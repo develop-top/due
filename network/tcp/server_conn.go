@@ -4,6 +4,7 @@ import (
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/network/common"
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"github.com/develop-top/due/v2/utils/xnet"
@@ -15,6 +16,7 @@ import (
 )
 
 type serverConn struct {
+	*common.ConnGroup
 	id                int64          // 连接ID
 	uid               int64          // 用户ID
 	state             int32          // 连接状态

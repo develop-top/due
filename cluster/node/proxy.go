@@ -123,6 +123,20 @@ func (p *Proxy) UnbindGate(ctx context.Context, uid int64) error {
 	return p.gateLinker.Unbind(ctx, uid)
 }
 
+// BindGroups 绑定用户组
+func (p *Proxy) BindGroups(ctx context.Context, gid string, cid int64, groups []int64) error {
+	if len(groups) == 0 {
+		return nil
+	}
+	return p.gateLinker.BindGroups(ctx, gid, cid, groups)
+}
+
+// UnbindGroups 解绑用户组
+// groups 解绑某些组，不传表示解绑所有组
+func (p *Proxy) UnbindGroups(ctx context.Context, gid string, cid int64, groups ...int64) error {
+	return p.gateLinker.UnbindGroups(ctx, gid, cid, groups...)
+}
+
 // BindNode 绑定节点
 // 单个用户可以绑定到多个节点服务器上，相同名称的节点服务器只能绑定一个，多次绑定会到相同名称的节点服务器会覆盖之前的绑定。
 // 绑定操作会通过发布订阅方式同步到网关服务器和其他相关节点服务器上。
