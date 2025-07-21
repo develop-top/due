@@ -3,6 +3,15 @@ package link
 import (
 	"context"
 	"fmt"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/develop-top/due/v2/tracer"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/core/endpoint"
@@ -14,13 +23,6 @@ import (
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/session"
-	"github.com/develop-top/due/v2/tracer"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
-	"golang.org/x/sync/errgroup"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type GateLinker struct {
@@ -354,8 +356,11 @@ func (l *GateLinker) doIndirectIsOnline(ctx context.Context, args *IsOnlineArgs)
 	v, err := l.doRPC(ctx, args.Target, func(client *gate.Client) (bool, interface{}, error) {
 		return client.IsOnline(ctx, args.Kind, args.Target)
 	})
+	if err != nil {
+		return false, err
+	}
 
-	return v.(bool), err
+	return v.(bool), nil
 }
 
 // Disconnect 断开连接
