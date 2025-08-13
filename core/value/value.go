@@ -22,6 +22,7 @@ type Value interface {
 	Bool() bool
 	String() string
 	Duration() time.Duration
+	B() float64
 	Ints() []int
 	Int8s() []int8
 	Int16s() []int16
@@ -37,6 +38,7 @@ type Value interface {
 	Bools() []bool
 	Strings() []string
 	Bytes() []byte
+	Bs() []float64
 	Durations() []time.Duration
 	Slice() []interface{}
 	Map() map[string]interface{}
@@ -111,6 +113,10 @@ func (v *value) String() string {
 	return xconv.String(v.Value())
 }
 
+func (v *value) B() float64 {
+	return xconv.B(v.Value())
+}
+
 func (v *value) Duration() time.Duration {
 	return xconv.Duration(v.Value())
 }
@@ -173,6 +179,10 @@ func (v *value) Strings() []string {
 
 func (v *value) Bytes() []byte {
 	return xconv.Bytes(v.Value())
+}
+
+func (v *value) Bs() []float64 {
+	return xconv.Bs(v.Value())
 }
 
 func (v *value) Durations() []time.Duration {

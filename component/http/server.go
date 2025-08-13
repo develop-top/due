@@ -31,8 +31,16 @@ func NewServer(opts ...Option) *Server {
 	s := &Server{}
 	s.opts = o
 	s.proxy = newProxy(s)
-	s.app = fiber.New(fiber.Config{ServerHeader: o.name})
-	s.app.Use(logger.New())
+	s.app = fiber.New(fiber.Config{
+		ServerHeader:  o.name,
+		BodyLimit:     o.bodyLimit,
+		StrictRouting: o.strictRouting,
+		CaseSensitive: o.caseSensitive,
+	})
+
+	if o.console {
+		s.app.Use(logger.New())
+	}
 
 	s.app.Use(recover.New(recover.Config{
 		EnableStackTrace: true,

@@ -354,8 +354,11 @@ func (l *GateLinker) doIndirectIsOnline(ctx context.Context, args *IsOnlineArgs)
 	v, err := l.doRPC(ctx, args.Target, func(client *gate.Client) (bool, interface{}, error) {
 		return client.IsOnline(ctx, args.Kind, args.Target)
 	})
+	if err != nil {
+		return false, err
+	}
 
-	return v.(bool), err
+	return v.(bool), nil
 }
 
 // Disconnect 断开连接

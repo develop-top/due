@@ -2,12 +2,13 @@ package xvalidate
 
 import (
 	"fmt"
-	"github.com/develop-top/due/v2/utils/xreflect"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/develop-top/due/v2/utils/xreflect"
 )
 
 // IsTelephone 检测是否是电话号码
