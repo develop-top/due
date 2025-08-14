@@ -3,6 +3,10 @@ package node
 import (
 	"context"
 	"fmt"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
@@ -12,8 +16,6 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/server"
 	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xtrace"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Server struct {
@@ -21,8 +23,10 @@ type Server struct {
 	provider Provider
 }
 
-func NewServer(addr string, provider Provider) (*Server, error) {
-	serv, err := server.NewServer(&server.Options{Addr: addr})
+type ServerOptions = server.Options
+
+func NewServer(provider Provider, opts *ServerOptions) (*Server, error) {
+	serv, err := server.NewServer(opts)
 	if err != nil {
 		return nil, err
 	}
