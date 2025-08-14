@@ -5,16 +5,18 @@ import (
 	"fmt"
 	"sync/atomic"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
+	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/transporter/internal/client"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/session"
 	"github.com/develop-top/due/v2/tracer"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type Client struct {
@@ -187,13 +189,22 @@ func (c *Client) Broadcast(ctx context.Context, kind session.Kind, message buffe
 
 // Publish 发布频道消息（异步）
 func (c *Client) Publish(ctx context.Context, channel string, message buffer.Buffer) error {
+	if len(channel) > 1<<8-1 {
+		return errors.ErrInvalidArgument
+	}
+
 	ctx, end, buf := c.traceBuffer(ctx, route.Publish, 0, protocol.EncodePublishReq(channel, message))
 	defer end()
+
 	return c.cli.Send(ctx, buf)
 }
 
 // Subscribe 订阅频道
 func (c *Client) Subscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	if len(channel) > 1<<8-1 {
+		return errors.ErrInvalidArgument
+	}
+
 	seq := c.doGenSequence()
 
 	ctx, end, buf := c.traceBuffer(ctx, route.Subscribe, seq, protocol.EncodeSubscribeReq(kind, targets, channel))
@@ -214,6 +225,10 @@ func (c *Client) Subscribe(ctx context.Context, kind session.Kind, targets []int
 
 // Unsubscribe 取消订阅频道
 func (c *Client) Unsubscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	if len(channel) > 1<<8-1 {
+		return errors.ErrInvalidArgument
+	}
+
 	seq := c.doGenSequence()
 
 	ctx, end, buf := c.traceBuffer(ctx, route.Unsubscribe, seq, protocol.EncodeUnsubscribeReq(kind, targets, channel))

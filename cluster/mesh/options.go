@@ -2,31 +2,30 @@ package mesh
 
 import (
 	"context"
+	"time"
+
 	"github.com/develop-top/due/v2/crypto"
 	"github.com/develop-top/due/v2/encoding"
 	"github.com/develop-top/due/v2/etc"
 	"github.com/develop-top/due/v2/locate"
+	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/transport"
-	"github.com/develop-top/due/v2/utils/xconv"
 	"github.com/develop-top/due/v2/utils/xuuid"
-	"time"
 )
 
 const (
 	defaultName    = "mesh"          // 默认节点名称
 	defaultCodec   = "proto"         // 默认编解码器名称
 	defaultTimeout = 3 * time.Second // 默认超时时间
-	defaultWeight  = 1               // 默认权重
 )
 
 const (
-	defaultIDKey      = "etc.cluster.mesh.id"
-	defaultNameKey    = "etc.cluster.mesh.name"
-	defaultCodecKey   = "etc.cluster.mesh.codec"
-	defaultTimeoutKey = "etc.cluster.mesh.timeout"
-	defaultWeightKey  = "etc.cluster.mesh.weight"
-	defaultMetadata   = "etc.cluster.mesh.metadata"
+	defaultIDKey       = "etc.cluster.mesh.id"
+	defaultNameKey     = "etc.cluster.mesh.name"
+	defaultCodecKey    = "etc.cluster.mesh.codec"
+	defaultTimeoutKey  = "etc.cluster.mesh.timeout"
+	defaultMetadataKey = "etc.cluster.mesh.metadata"
 )
 
 type Option func(o *options)
@@ -34,8 +33,6 @@ type Option func(o *options)
 type options struct {
 	id          string                // 实例ID
 	name        string                // 实例名称
-	weight      int                   // 权重
-	metadata    map[string]string     // 元数据
 	ctx         context.Context       // 上下文
 	codec       encoding.Codec        // 编解码器
 	timeout     time.Duration         // RPC调用超时时间
@@ -43,6 +40,7 @@ type options struct {
 	registry    registry.Registry     // 服务注册器
 	encryptor   crypto.Encryptor      // 消息加密器
 	transporter transport.Transporter // 消息传输器
+	metadata    map[string]any        // 元数据
 }
 
 func defaultOptions() *options {
@@ -51,8 +49,7 @@ func defaultOptions() *options {
 		name:     defaultName,
 		codec:    encoding.Invoke(defaultCodec),
 		timeout:  defaultTimeout,
-		weight:   defaultWeight,
-		metadata: map[string]string{},
+		metadata: make(map[string]any),
 	}
 
 	if id := etc.Get(defaultIDKey).String(); id != "" {
@@ -73,14 +70,8 @@ func defaultOptions() *options {
 		opts.timeout = timeout
 	}
 
-	if weight := etc.Get(defaultWeightKey).Int(); weight > 0 {
-		opts.weight = weight
-	}
-
-	if md := etc.Get(defaultMetadata).Map(); md != nil {
-		for k, v := range md {
-			opts.metadata[k] = xconv.String(v)
-		}
+	if err := etc.Get(defaultMetadataKey).Scan(&opts.metadata); err != nil {
+		log.Warnf("scan mesh metadata failed: %v", err)
 	}
 
 	return opts
@@ -126,12 +117,7 @@ func WithTransporter(transporter transport.Transporter) Option {
 	return func(o *options) { o.transporter = transporter }
 }
 
-// WithWeight 设置权重
-func WithWeight(weight int) Option {
-	return func(o *options) { o.weight = weight }
-}
-
 // WithMetadata 设置元数据
-func WithMetadata(md map[string]string) Option {
-	return func(o *options) { o.metadata = md }
+func WithMetadata(metadata map[string]any) Option {
+	return func(o *options) { o.metadata = metadata }
 }

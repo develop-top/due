@@ -2,12 +2,13 @@ package dispatcher_test
 
 import (
 	"fmt"
+	"math"
+	"testing"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/endpoint"
 	"github.com/develop-top/due/v2/internal/dispatcher"
 	"github.com/develop-top/due/v2/registry"
-	"math"
-	"testing"
 )
 
 func TestDispatcher_ReplaceServices(t *testing.T) {
@@ -69,7 +70,7 @@ func TestDispatcher_ReplaceServices(t *testing.T) {
 		}
 	)
 
-	d := dispatcher.NewDispatcher(dispatcher.RoundRobin)
+	d := dispatcher.NewDispatcher(cluster.WeightRoundRobin)
 
 	d.ReplaceServices(instance1, instance2, instance3)
 
@@ -93,9 +94,9 @@ func TestDispatcher_WeightRoundRobin(t *testing.T) {
 		// 创建三个服务实例，权重分别为4、2、1
 		instance1 = &registry.ServiceInstance{
 			ID:       "xa",
-			Name:     "gate-1",
+			Name:     "node-1",
 			Kind:     cluster.Node.String(),
-			Alias:    "gate-1",
+			Alias:    "node-1",
 			State:    cluster.Work.String(),
 			Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8001", false).String(),
 			Weight:   4, // 权重4
@@ -106,9 +107,9 @@ func TestDispatcher_WeightRoundRobin(t *testing.T) {
 		}
 		instance2 = &registry.ServiceInstance{
 			ID:       "xb",
-			Name:     "gate-2",
+			Name:     "node-2",
 			Kind:     cluster.Node.String(),
-			Alias:    "gate-2",
+			Alias:    "node-2",
 			State:    cluster.Work.String(),
 			Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8002", false).String(),
 			Weight:   2, // 权重2
@@ -119,9 +120,9 @@ func TestDispatcher_WeightRoundRobin(t *testing.T) {
 		}
 		instance3 = &registry.ServiceInstance{
 			ID:       "xc",
-			Name:     "gate-3",
+			Name:     "node-3",
 			Kind:     cluster.Node.String(),
-			Alias:    "gate-3",
+			Alias:    "node-3",
 			State:    cluster.Work.String(),
 			Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8003", false).String(),
 			Weight:   1, // 权重1
@@ -133,12 +134,12 @@ func TestDispatcher_WeightRoundRobin(t *testing.T) {
 	)
 
 	// 创建加权轮询调度器
-	d := dispatcher.NewDispatcher(dispatcher.WeightRoundRobin)
+	d := dispatcher.NewDispatcher(cluster.WeightRoundRobin)
 	d.ReplaceServices(instance1, instance2, instance3)
 
 	// 统计每个实例被选中的次数
 	counts := make(map[string]int)
-	totalRounds := 70 // 选择一个能被所有权重和(7)整除的数
+	totalRounds := 200 // 选择一个能被所有权重和(7)整除的数
 
 	// 执行多轮测试
 	for i := 0; i < totalRounds; i++ {
@@ -201,9 +202,9 @@ func BenchmarkDispatcher_WeightRoundRobin(b *testing.B) {
 		instances = []*registry.ServiceInstance{
 			{
 				ID:       "xa",
-				Name:     "gate-1",
+				Name:     "node-1",
 				Kind:     cluster.Node.String(),
-				Alias:    "gate-1",
+				Alias:    "node-1",
 				State:    cluster.Work.String(),
 				Weight:   4,
 				Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8001", false).String(),
@@ -214,9 +215,9 @@ func BenchmarkDispatcher_WeightRoundRobin(b *testing.B) {
 			},
 			{
 				ID:       "xb",
-				Name:     "gate-2",
+				Name:     "node-2",
 				Kind:     cluster.Node.String(),
-				Alias:    "gate-2",
+				Alias:    "node-2",
 				State:    cluster.Work.String(),
 				Weight:   2,
 				Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8002", false).String(),
@@ -227,9 +228,9 @@ func BenchmarkDispatcher_WeightRoundRobin(b *testing.B) {
 			},
 			{
 				ID:       "xc",
-				Name:     "gate-3",
+				Name:     "node-3",
 				Kind:     cluster.Node.String(),
-				Alias:    "gate-3",
+				Alias:    "node-3",
 				State:    cluster.Work.String(),
 				Weight:   1,
 				Endpoint: endpoint.NewEndpoint("grpc", "127.0.0.1:8003", false).String(),
@@ -279,7 +280,7 @@ func BenchmarkDispatcher_WeightRoundRobin(b *testing.B) {
 			}
 
 			// 创建调度器
-			d := dispatcher.NewDispatcher(dispatcher.WeightRoundRobin)
+			d := dispatcher.NewDispatcher(cluster.WeightRoundRobin)
 			d.ReplaceServices(testInstances...)
 
 			// 重置计时器

@@ -52,8 +52,8 @@ type ServiceInstance struct {
 	Endpoint string `json:"endpoint,omitempty"`
 	// 微服务路由加权轮询权重
 	Weight int `json:"weight,omitempty"`
-	// 服务元数据
-	Metadata map[string]string `json:"metadata,omitempty"`
+	// 元数据
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 type Route struct {

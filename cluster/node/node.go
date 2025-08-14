@@ -3,6 +3,9 @@ package node
 import (
 	"context"
 	"fmt"
+	"sync"
+	"sync/atomic"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/component"
 	"github.com/develop-top/due/v2/core/info"
@@ -12,8 +15,6 @@ import (
 	"github.com/develop-top/due/v2/transport"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"golang.org/x/sync/errgroup"
-	"sync"
-	"sync/atomic"
 )
 
 type HookHandler func(proxy *Proxy)

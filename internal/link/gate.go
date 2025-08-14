@@ -38,7 +38,7 @@ func NewGateLinker(ctx context.Context, opts *Options) *GateLinker {
 		ctx:        ctx,
 		opts:       opts,
 		builder:    gate.NewBuilder(&gate.Options{InsID: opts.InsID, InsKind: opts.InsKind}),
-		dispatcher: dispatcher.NewDispatcher(opts.BalanceStrategy),
+		dispatcher: dispatcher.NewDispatcher(opts.Dispatch),
 	}
 
 	return l

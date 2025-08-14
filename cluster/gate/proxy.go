@@ -21,6 +21,7 @@ func newProxy(gate *Gate) *proxy {
 		InsKind:  cluster.Gate,
 		Locator:  gate.opts.locator,
 		Registry: gate.opts.registry,
+		Dispatch: gate.opts.dispatch,
 	})}
 }
 
