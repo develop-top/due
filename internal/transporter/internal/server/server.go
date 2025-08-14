@@ -2,15 +2,16 @@ package server
 
 import (
 	"context"
+	"net"
+	"sync"
+	"time"
+
 	"github.com/develop-top/due/v2/core/endpoint"
 	xnet "github.com/develop-top/due/v2/core/net"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/internal/transporter/internal/route"
 	"github.com/develop-top/due/v2/log"
-	"net"
-	"sync"
-	"time"
 )
 
 const scheme = "drpc"
@@ -149,8 +150,8 @@ func (s *Server) handshake(ctx context.Context, conn *Conn, data []byte) error {
 		return err
 	}
 
-	conn.InsKind = insKind
 	conn.InsID = insID
+	conn.InsKind = insKind
 
 	return conn.Send(ctx, protocol.EncodeBuffer(protocol.DataBit, route.Handshake, seq, nil, protocol.EncodeHandshakeRes(codes.ErrorToCode(err))))
 }

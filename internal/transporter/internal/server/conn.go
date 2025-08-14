@@ -2,6 +2,13 @@ package server
 
 import (
 	"context"
+	"net"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/errors"
@@ -9,11 +16,6 @@ import (
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/utils/xtime"
-	"go.opentelemetry.io/otel/trace"
-	"net"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type Conn struct {
@@ -54,7 +56,7 @@ func (c *Conn) Send(ctx context.Context, buf buffer.Buffer) (err error) {
 		return err
 	}
 
-	buf.Range(func(node *buffer.NocopyNode) bool {
+	buf.Visit(func(node *buffer.NocopyNode) bool {
 		if _, err = c.conn.Write(node.Bytes()); err != nil {
 			return false
 		}
