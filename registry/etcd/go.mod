@@ -21,9 +21,6 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
-	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible // indirect
-	github.com/lestrrat-go/strftime v1.1.0 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.5.21 // indirect
 	go.uber.org/multierr v1.11.0 // indirect

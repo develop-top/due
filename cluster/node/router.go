@@ -3,11 +3,13 @@ package node
 import (
 	"context"
 	"fmt"
+
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/tracer"
 	"github.com/develop-top/due/v2/utils/xcall"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type RouteHandler func(ctx Context)
@@ -175,7 +177,7 @@ func (r *Router) Group(groups ...func(group *RouterGroup)) *RouterGroup {
 	return group
 }
 
-func (r *Router) deliver(ctx context.Context, gid, nid, pid string, cid, uid int64, seq, route int32, data interface{}) {
+func (r *Router) deliver(ctx context.Context, gid, nid, pid string, cid, uid int64, seq, route int32, data any) {
 	req := r.node.reqPool.Get().(*request)
 	req.ctx = ctx
 	req.gid = gid
