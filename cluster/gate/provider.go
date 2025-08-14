@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/log"
@@ -44,35 +45,6 @@ func (p *provider) Unbind(ctx context.Context, uid int64) error {
 	}
 
 	return p.gate.proxy.unbindGate(ctx, cid, uid)
-}
-
-// BindGroups 绑定用户所在组
-func (p *provider) BindGroups(ctx context.Context, cid int64, groups []int64) error {
-	if cid <= 0 {
-		return errors.ErrInvalidArgument
-	}
-
-	err := p.gate.session.BindGroups(cid, groups)
-	if err != nil {
-		return err
-	}
-
-	return err
-}
-
-// UnbindGroups 解绑用户所在组
-// groups 解绑某些组，不传表示解绑所有组
-func (p *provider) UnbindGroups(ctx context.Context, cid int64, groups ...int64) error {
-	if cid <= 0 {
-		return errors.ErrInvalidArgument
-	}
-
-	err := p.gate.session.UnbindGroups(cid, groups...)
-	if err != nil {
-		return err
-	}
-
-	return err
 }
 
 // GetIP 获取客户端IP地址
@@ -118,6 +90,21 @@ func (p *provider) Multicast(ctx context.Context, kind session.Kind, targets []i
 // Broadcast 推送广播消息
 func (p *provider) Broadcast(ctx context.Context, kind session.Kind, message []byte) (int64, error) {
 	return p.gate.session.Broadcast(kind, message)
+}
+
+// Publish 发布频道消息
+func (p *provider) Publish(ctx context.Context, channel string, message []byte) int64 {
+	return p.gate.session.Publish(channel, message)
+}
+
+// Subscribe 订阅频道
+func (p *provider) Subscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	return p.gate.session.Subscribe(kind, targets, channel)
+}
+
+// Unsubscribe 取消订阅频道
+func (p *provider) Unsubscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	return p.gate.session.Unsubscribe(kind, targets, channel)
 }
 
 // GetState 获取状态

@@ -25,16 +25,12 @@ type (
 		ID() int64
 		// UID 获取用户ID
 		UID() int64
+		// Attr 属性接口
+		Attr() Attr
 		// Bind 绑定用户ID
 		Bind(uid int64)
 		// Unbind 解绑用户ID
 		Unbind()
-		// Groups 所在组
-		Groups() map[int64]struct{}
-		// BindGroup 绑定组
-		BindGroup(group int64)
-		// UnbindGroup 解绑组
-		UnbindGroup(group int64)
 		// Send 发送消息（同步）
 		Send(msg []byte) error
 		// Push 发送消息（异步）
@@ -51,5 +47,16 @@ type (
 		RemoteIP() (string, error)
 		// RemoteAddr 获取远端地址
 		RemoteAddr() (net.Addr, error)
+	}
+
+	Attr interface {
+		// Set 设置属性值
+		Set(key, value any)
+		// Get 获取属性值
+		Get(key any) (any, bool)
+		// Del 删除属性值
+		Del(key any) bool
+		// Visit 访问所有的属性值
+		Visit(fn func(key, value any) bool)
 	}
 )

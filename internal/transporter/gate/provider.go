@@ -2,6 +2,7 @@ package gate
 
 import (
 	"context"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/session"
 )
@@ -11,11 +12,6 @@ type Provider interface {
 	Bind(ctx context.Context, cid, uid int64) error
 	// Unbind 解绑用户与网关间的关系
 	Unbind(ctx context.Context, uid int64) error
-	// BindGroups 绑定用户所在组
-	BindGroups(ctx context.Context, cid int64, groups []int64) error
-	// UnbindGroups 解绑用户所在组
-	// groups 解绑某些组，不传表示解绑所有组
-	UnbindGroups(ctx context.Context, cid int64, groups ...int64) error
 	// GetIP 获取客户端IP地址
 	GetIP(ctx context.Context, kind session.Kind, target int64) (ip string, err error)
 	// IsOnline 检测是否在线
@@ -30,6 +26,12 @@ type Provider interface {
 	Multicast(ctx context.Context, kind session.Kind, targets []int64, message []byte) (total int64, err error)
 	// Broadcast 推送广播消息
 	Broadcast(ctx context.Context, kind session.Kind, message []byte) (total int64, err error)
+	// Publish 发布频道消息
+	Publish(ctx context.Context, channel string, message []byte) (total int64)
+	// Subscribe 订阅频道
+	Subscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error
+	// Unsubscribe 取消订阅频道
+	Unsubscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error
 	// GetState 获取状态
 	GetState(ctx context.Context) (cluster.State, error)
 	// SetState 设置状态

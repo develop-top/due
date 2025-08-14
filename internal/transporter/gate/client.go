@@ -3,6 +3,8 @@ package gate
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/client"
@@ -13,7 +15,6 @@ import (
 	"github.com/develop-top/due/v2/tracer"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
-	"sync/atomic"
 )
 
 type Client struct {
@@ -94,46 +95,6 @@ func (c *Client) Unbind(ctx context.Context, uid int64) (bool, error) {
 	return code == codes.NotFoundSession, nil
 }
 
-// BindGroups 绑定用户组
-func (c *Client) BindGroups(ctx context.Context, cid int64, groups []int64) error {
-	seq := c.doGenSequence()
-
-	ctx, end, buf := c.traceBuffer(ctx, route.BindGroups, seq, protocol.EncodeBindGroupsReq(cid, groups))
-	defer end()
-
-	res, err := c.cli.Call(ctx, seq, buf)
-	if err != nil {
-		return err
-	}
-
-	_, err = protocol.DecodeBindGroupsRes(res)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// UnbindGroups 解绑用户组
-func (c *Client) UnbindGroups(ctx context.Context, cid int64, groups ...int64) error {
-	seq := c.doGenSequence()
-
-	ctx, end, buf := c.traceBuffer(ctx, route.UnbindGroups, seq, protocol.EncodeUnbindGroupsReq(cid, groups))
-	defer end()
-
-	res, err := c.cli.Call(ctx, seq, buf)
-	if err != nil {
-		return err
-	}
-
-	_, err = protocol.DecodeUnbindGroupsRes(res)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // GetIP 获取客户端IP
 func (c *Client) GetIP(ctx context.Context, kind session.Kind, target int64) (string, bool, error) {
 	seq := c.doGenSequence()
@@ -203,25 +164,72 @@ func (c *Client) Disconnect(ctx context.Context, kind session.Kind, target int64
 	}
 }
 
-// Push 异步推送消息
+// Push 推送消息（异步）
 func (c *Client) Push(ctx context.Context, kind session.Kind, target int64, message buffer.Buffer) error {
 	ctx, end, buf := c.traceBuffer(ctx, route.Push, 0, protocol.EncodePushReq(kind, target, message))
 	defer end()
 	return c.cli.Send(ctx, buf, target)
 }
 
-// Multicast 推送组播消息
+// Multicast 推送组播消息（异步）
 func (c *Client) Multicast(ctx context.Context, kind session.Kind, targets []int64, message buffer.Buffer) error {
 	ctx, end, buf := c.traceBuffer(ctx, route.Multicast, 0, protocol.EncodeMulticastReq(kind, targets, message))
 	defer end()
 	return c.cli.Send(ctx, buf)
 }
 
-// Broadcast 推送广播消息
+// Broadcast 推送广播消息（异步）
 func (c *Client) Broadcast(ctx context.Context, kind session.Kind, message buffer.Buffer) error {
 	ctx, end, buf := c.traceBuffer(ctx, route.Broadcast, 0, protocol.EncodeBroadcastReq(kind, message))
 	defer end()
 	return c.cli.Send(ctx, buf)
+}
+
+// Publish 发布频道消息（异步）
+func (c *Client) Publish(ctx context.Context, channel string, message buffer.Buffer) error {
+	ctx, end, buf := c.traceBuffer(ctx, route.Publish, 0, protocol.EncodePublishReq(channel, message))
+	defer end()
+	return c.cli.Send(ctx, buf)
+}
+
+// Subscribe 订阅频道
+func (c *Client) Subscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	seq := c.doGenSequence()
+
+	ctx, end, buf := c.traceBuffer(ctx, route.Subscribe, seq, protocol.EncodeSubscribeReq(kind, targets, channel))
+	defer end()
+
+	res, err := c.cli.Call(ctx, seq, buf)
+	if err != nil {
+		return err
+	}
+
+	code, err := protocol.DecodeSubscribeRes(res)
+	if err != nil {
+		return err
+	}
+
+	return codes.CodeToError(code)
+}
+
+// Unsubscribe 取消订阅频道
+func (c *Client) Unsubscribe(ctx context.Context, kind session.Kind, targets []int64, channel string) error {
+	seq := c.doGenSequence()
+
+	ctx, end, buf := c.traceBuffer(ctx, route.Unsubscribe, seq, protocol.EncodeUnsubscribeReq(kind, targets, channel))
+	defer end()
+
+	res, err := c.cli.Call(ctx, seq, buf)
+	if err != nil {
+		return err
+	}
+
+	code, err := protocol.DecodeUnsubscribeRes(res)
+	if err != nil {
+		return err
+	}
+
+	return codes.CodeToError(code)
 }
 
 // GetState 获取状态

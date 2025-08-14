@@ -1,26 +1,26 @@
 package kcp
 
 import (
+	"net"
+	"sync"
+	"sync/atomic"
+	"time"
+
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/network"
-	"github.com/develop-top/due/v2/network/common"
 	"github.com/develop-top/due/v2/packet"
 	"github.com/develop-top/due/v2/utils/xcall"
 	"github.com/develop-top/due/v2/utils/xnet"
 	"github.com/develop-top/due/v2/utils/xtime"
 	"github.com/xtaci/kcp-go/v5"
-	"net"
-	"sync"
-	"sync/atomic"
-	"time"
 )
 
 type serverConn struct {
-	*common.ConnGroup
 	rw                sync.RWMutex    // 锁
 	id                int64           // 连接ID
 	uid               int64           // 用户ID
+	attr              *attr           // 连接属性
 	state             int32           // 连接状态
 	conn              *kcp.UDPSession // UDP源连接
 	connMgr           *serverConnMgr  // 连接管理
@@ -40,6 +40,11 @@ func (c *serverConn) ID() int64 {
 // UID 获取用户ID
 func (c *serverConn) UID() int64 {
 	return atomic.LoadInt64(&c.uid)
+}
+
+// Attr 获取属性接口
+func (c *serverConn) Attr() network.Attr {
+	return c.attr
 }
 
 // Bind 绑定用户ID
@@ -155,6 +160,7 @@ func (c *serverConn) RemoteAddr() (net.Addr, error) {
 // 初始化连接
 func (c *serverConn) init(cm *serverConnMgr, id int64, conn *kcp.UDPSession) {
 	c.id = id
+	c.attr = &attr{}
 	c.conn = conn
 	c.connMgr = cm
 	c.chWrite = make(chan chWrite, 4096)
@@ -178,6 +184,11 @@ func (c *serverConn) init(cm *serverConnMgr, id int64, conn *kcp.UDPSession) {
 	if c.connMgr.server.connectHandler != nil {
 		c.connMgr.server.connectHandler(c)
 	}
+}
+
+// 重置连接
+func (c *serverConn) reset() {
+	c.attr = nil
 }
 
 // 检测连接状态
@@ -218,12 +229,12 @@ func (c *serverConn) graceClose(isNeedRecycle bool) error {
 
 	err := conn.Close()
 
-	if isNeedRecycle {
-		c.connMgr.recycle(conn)
-	}
-
 	if c.connMgr.server.disconnectHandler != nil {
 		c.connMgr.server.disconnectHandler(c)
+	}
+
+	if isNeedRecycle {
+		c.connMgr.recycle(conn)
 	}
 
 	return err
@@ -247,12 +258,12 @@ func (c *serverConn) forceClose(isNeedRecycle bool) error {
 
 	err := conn.Close()
 
-	if isNeedRecycle {
-		c.connMgr.recycle(conn)
-	}
-
 	if c.connMgr.server.disconnectHandler != nil {
 		c.connMgr.server.disconnectHandler(c)
+	}
+
+	if isNeedRecycle {
+		c.connMgr.recycle(conn)
 	}
 
 	return err

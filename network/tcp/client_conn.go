@@ -1,25 +1,25 @@
 package tcp
 
 import (
-	"github.com/develop-top/due/v2/errors"
-	"github.com/develop-top/due/v2/log"
-	"github.com/develop-top/due/v2/network"
-	"github.com/develop-top/due/v2/network/common"
-	"github.com/develop-top/due/v2/packet"
-	"github.com/develop-top/due/v2/utils/xcall"
-	"github.com/develop-top/due/v2/utils/xnet"
-	"github.com/develop-top/due/v2/utils/xtime"
 	"net"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/develop-top/due/v2/errors"
+	"github.com/develop-top/due/v2/log"
+	"github.com/develop-top/due/v2/network"
+	"github.com/develop-top/due/v2/packet"
+	"github.com/develop-top/due/v2/utils/xcall"
+	"github.com/develop-top/due/v2/utils/xnet"
+	"github.com/develop-top/due/v2/utils/xtime"
 )
 
 type clientConn struct {
-	*common.ConnGroup
 	rw                sync.RWMutex
 	id                int64         // 连接ID
 	uid               int64         // 用户ID
+	attr              *attr         // 连接属性
 	conn              net.Conn      // TCP源连接
 	state             int32         // 连接状态
 	client            *client       // 客户端
@@ -33,8 +33,8 @@ var _ network.Conn = &clientConn{}
 
 func newClientConn(client *client, id int64, conn net.Conn) network.Conn {
 	c := &clientConn{
-		ConnGroup:         common.NewConnGroup(),
 		id:                id,
+		attr:              &attr{},
 		conn:              conn,
 		state:             int32(network.ConnOpened),
 		client:            client,
@@ -63,6 +63,11 @@ func (c *clientConn) ID() int64 {
 // UID 获取用户ID
 func (c *clientConn) UID() int64 {
 	return atomic.LoadInt64(&c.uid)
+}
+
+// Attr 获取属性接口
+func (c *clientConn) Attr() network.Attr {
+	return c.attr
 }
 
 // Bind 绑定用户ID

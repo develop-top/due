@@ -2,6 +2,8 @@ package node
 
 import (
 	"context"
+	"time"
+
 	"github.com/develop-top/due/v2/cluster"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/internal/link"
@@ -9,7 +11,6 @@ import (
 	"github.com/develop-top/due/v2/session"
 	"github.com/develop-top/due/v2/transport"
 	"github.com/develop-top/due/v2/utils/xcall"
-	"time"
 )
 
 type Proxy struct {
@@ -121,20 +122,6 @@ func (p *Proxy) BindGate(ctx context.Context, gid string, cid, uid int64) error 
 // UnbindGate 解绑网关
 func (p *Proxy) UnbindGate(ctx context.Context, uid int64) error {
 	return p.gateLinker.Unbind(ctx, uid)
-}
-
-// BindGroups 绑定用户组
-func (p *Proxy) BindGroups(ctx context.Context, gid string, cid int64, groups []int64) error {
-	if len(groups) == 0 {
-		return nil
-	}
-	return p.gateLinker.BindGroups(ctx, gid, cid, groups)
-}
-
-// UnbindGroups 解绑用户组
-// groups 解绑某些组，不传表示解绑所有组
-func (p *Proxy) UnbindGroups(ctx context.Context, gid string, cid int64, groups ...int64) error {
-	return p.gateLinker.UnbindGroups(ctx, gid, cid, groups...)
 }
 
 // BindNode 绑定节点
@@ -277,6 +264,21 @@ func (p *Proxy) Multicast(ctx context.Context, args *cluster.MulticastArgs) erro
 // Broadcast 推送广播消息
 func (p *Proxy) Broadcast(ctx context.Context, args *cluster.BroadcastArgs) error {
 	return p.gateLinker.Broadcast(ctx, args)
+}
+
+// Publish 发布消息
+func (p *Proxy) Publish(ctx context.Context, args *cluster.PublishArgs) error {
+	return p.gateLinker.Publish(ctx, args)
+}
+
+// Subscribe 订阅频道
+func (p *Proxy) Subscribe(ctx context.Context, args *cluster.SubscribeArgs) error {
+	return p.gateLinker.Subscribe(ctx, args)
+}
+
+// Unsubscribe 取消订阅频道
+func (p *Proxy) Unsubscribe(ctx context.Context, args *cluster.UnsubscribeArgs) error {
+	return p.gateLinker.Unsubscribe(ctx, args)
 }
 
 // Deliver 投递消息给节点处理

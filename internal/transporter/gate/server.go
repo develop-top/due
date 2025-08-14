@@ -3,6 +3,7 @@ package gate
 import (
 	"context"
 	"fmt"
+
 	"github.com/develop-top/due/v2/core/buffer"
 	"github.com/develop-top/due/v2/internal/transporter/internal/codes"
 	"github.com/develop-top/due/v2/internal/transporter/internal/protocol"
@@ -34,8 +35,6 @@ func NewServer(addr string, provider Provider) (*Server, error) {
 func (s *Server) init() {
 	s.RegisterHandler(route.Bind, s.bind)
 	s.RegisterHandler(route.Unbind, s.unbind)
-	s.RegisterHandler(route.BindGroups, s.bindGroups)
-	s.RegisterHandler(route.UnbindGroups, s.unbindGroups)
 	s.RegisterHandler(route.GetIP, s.getIP)
 	s.RegisterHandler(route.Stat, s.stat)
 	s.RegisterHandler(route.IsOnline, s.isOnline)
@@ -43,6 +42,11 @@ func (s *Server) init() {
 	s.RegisterHandler(route.Push, s.push)
 	s.RegisterHandler(route.Multicast, s.multicast)
 	s.RegisterHandler(route.Broadcast, s.broadcast)
+	s.RegisterHandler(route.Publish, s.publish)
+	s.RegisterHandler(route.Subscribe, s.subscribe)
+	s.RegisterHandler(route.Unsubscribe, s.unsubscribe)
+	s.RegisterHandler(route.GetState, s.getState)
+	s.RegisterHandler(route.SetState, s.setState)
 }
 
 // 携带链路追踪信息
@@ -99,40 +103,6 @@ func (s *Server) unbind(ctx context.Context, conn *server.Conn, data []byte) err
 		return err
 	} else {
 		return conn.Send(ctx, s.traceBuffer(ctx, route.Unbind, seq, protocol.EncodeUnbindRes(codes.ErrorToCode(err))))
-	}
-}
-
-// 绑定用户所在组
-func (s *Server) bindGroups(ctx context.Context, conn *server.Conn, data []byte) error {
-	ctx, _, end := s.startSpan(ctx, route.BindGroups)
-	defer end()
-
-	seq, cid, groups, err := protocol.DecodeBindGroupsReq(data)
-	if err != nil {
-		return err
-	}
-
-	if err = s.provider.BindGroups(ctx, cid, groups); seq == 0 {
-		return err
-	} else {
-		return conn.Send(ctx, s.traceBuffer(ctx, route.BindGroups, seq, protocol.EncodeBindGroupsRes(codes.ErrorToCode(err))))
-	}
-}
-
-// 解绑用户所在组
-func (s *Server) unbindGroups(ctx context.Context, conn *server.Conn, data []byte) error {
-	ctx, _, end := s.startSpan(ctx, route.UnbindGroups)
-	defer end()
-
-	seq, cid, groups, err := protocol.DecodeUnbindGroupsReq(data)
-	if err != nil {
-		return err
-	}
-
-	if err = s.provider.UnbindGroups(ctx, cid, groups...); seq == 0 {
-		return err
-	} else {
-		return conn.Send(ctx, s.traceBuffer(ctx, route.UnbindGroups, seq, protocol.EncodeUnbindGroupsRes(codes.ErrorToCode(err))))
 	}
 }
 
@@ -255,6 +225,57 @@ func (s *Server) broadcast(ctx context.Context, conn *server.Conn, data []byte) 
 	}
 }
 
+// 发布频道消息
+func (s *Server) publish(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Publish)
+	defer end()
+
+	seq, channel, message, err := protocol.DecodePublishReq(data)
+	if err != nil {
+		return err
+	}
+
+	if total := s.provider.Publish(ctx, channel, message); seq == 0 {
+		return nil
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Publish, seq, protocol.EncodePublishRes(uint64(total))))
+	}
+}
+
+// 订阅频道
+func (s *Server) subscribe(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Subscribe)
+	defer end()
+
+	seq, kind, targets, channel, err := protocol.DecodeSubscribeReq(data)
+	if err != nil {
+		return err
+	}
+
+	if err = s.provider.Subscribe(ctx, kind, targets, channel); seq == 0 {
+		return err
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Subscribe, seq, protocol.EncodeSubscribeRes(codes.ErrorToCode(err))))
+	}
+}
+
+// 取消订阅频道
+func (s *Server) unsubscribe(ctx context.Context, conn *server.Conn, data []byte) error {
+	ctx, _, end := s.startSpan(ctx, route.Unsubscribe)
+	defer end()
+
+	seq, kind, targets, channel, err := protocol.DecodeUnsubscribeReq(data)
+	if err != nil {
+		return err
+	}
+
+	if err = s.provider.Unsubscribe(ctx, kind, targets, channel); seq == 0 {
+		return err
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.Unsubscribe, seq, protocol.EncodeUnsubscribeRes(codes.ErrorToCode(err))))
+	}
+}
+
 // 获取状态
 func (s *Server) getState(ctx context.Context, conn *server.Conn, data []byte) error {
 	ctx, _, end := s.startSpan(ctx, route.GetState)
@@ -280,7 +301,10 @@ func (s *Server) setState(ctx context.Context, conn *server.Conn, data []byte) e
 		return err
 	}
 
-	err = s.provider.SetState(ctx, state)
+	if err = s.provider.SetState(ctx, state); seq == 0 {
+		return err
+	} else {
+		return conn.Send(ctx, s.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateRes(codes.ErrorToCode(err))))
+	}
 
-	return conn.Send(ctx, s.traceBuffer(ctx, route.SetState, seq, protocol.EncodeSetStateRes(codes.ErrorToCode(err))))
 }

@@ -199,17 +199,6 @@ func (e *event) UnbindGate(uid ...int64) error {
 	}
 }
 
-// BindGroups 绑定用户组
-func (e *event) BindGroups(groups ...int64) error {
-	return e.node.proxy.BindGroups(e.ctx, e.gid, e.cid, groups)
-}
-
-// UnbindGroups 解绑用户组
-// groups 解绑某些组，不传表示解绑所有组
-func (e *event) UnbindGroups(groups ...int64) error {
-	return e.node.proxy.UnbindGroups(e.ctx, e.gid, e.cid, groups...)
-}
-
 // BindNode 绑定节点
 func (e *event) BindNode(uid ...int64) error {
 	switch {

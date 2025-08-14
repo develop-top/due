@@ -55,11 +55,11 @@ func TestTimeout(t *testing.T) {
 }
 
 // GetState 获取状态
-func (p *provider) GetState() (cluster.State, error) {
+func (p *provider) GetState(ctx context.Context) (cluster.State, error) {
 	return cluster.Work, nil
 }
 
 // SetState 设置状态
-func (p *provider) SetState(state cluster.State) error {
+func (p *provider) SetState(ctx context.Context, state cluster.State) error {
 	return nil
 }
