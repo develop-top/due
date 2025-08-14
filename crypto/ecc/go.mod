@@ -3,7 +3,7 @@ module github.com/develop-top/due/crypto/ecc/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.2.5
+	github.com/develop-top/due/v2 v2.2.8
 	github.com/ethereum/go-ethereum v1.12.0
 )
 

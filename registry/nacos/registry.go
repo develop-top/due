@@ -2,6 +2,11 @@ package nacos
 
 import (
 	"context"
+	"net"
+	"net/url"
+	"strconv"
+	"sync"
+
 	"github.com/develop-top/due/v2/encoding/json"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/log"
@@ -11,10 +16,6 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/v2/common/constant"
 	"github.com/nacos-group/nacos-sdk-go/v2/model"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
-	"net"
-	"net/url"
-	"strconv"
-	"sync"
 )
 
 const name = "nacos"
@@ -188,7 +189,7 @@ func (r *Registry) Services(ctx context.Context, serviceName string) ([]*registr
 }
 
 // 获取服务实体列表
-func (r *Registry) services(ctx context.Context, serviceName string) ([]*registry.ServiceInstance, error) {
+func (r *Registry) services(_ context.Context, serviceName string) ([]*registry.ServiceInstance, error) {
 	instances, err := r.opts.client.SelectInstances(vo.SelectInstancesParam{
 		ServiceName: serviceName,
 		Clusters:    []string{r.opts.clusterName},
@@ -223,8 +224,8 @@ func parseInstances(instances []model.Instance) ([]*registry.ServiceInstance, er
 		ins.Routes = make([]registry.Route, 0)
 		ins.Events = make([]int, 0)
 		ins.Services = make([]string, 0)
-		ins.Metadata = make(map[string]string, 0)
 		ins.Weight = xconv.Int(instance.Metadata[metaFieldWeight])
+		ins.Metadata = make(map[string]string)
 
 		if v := instance.Metadata[metaFieldRoutes]; v != "" {
 			if err := json.Unmarshal([]byte(v), &ins.Routes); err != nil {

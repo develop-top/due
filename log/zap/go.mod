@@ -3,7 +3,7 @@ module github.com/develop-top/due/log/zap/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.2.5
+	github.com/develop-top/due/v2 v2.2.8
 	go.uber.org/zap v1.27.0
 )
 

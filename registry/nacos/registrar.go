@@ -2,14 +2,15 @@ package nacos
 
 import (
 	"context"
+	"net"
+	"net/url"
+	"strconv"
+
 	"github.com/develop-top/due/v2/encoding/json"
 	"github.com/develop-top/due/v2/errors"
 	"github.com/develop-top/due/v2/registry"
 	"github.com/develop-top/due/v2/utils/xconv"
 	"github.com/nacos-group/nacos-sdk-go/v2/vo"
-	"net"
-	"net/url"
-	"strconv"
 )
 
 const (
@@ -35,7 +36,7 @@ func newRegistrar(registry *Registry) *registrar {
 }
 
 // 注册服务
-func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance) error {
+func (r *registrar) register(_ context.Context, ins *registry.ServiceInstance) error {
 	host, port, err := r.parseHostPort(ins.Endpoint)
 	if err != nil {
 		return err
@@ -56,7 +57,7 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 		return err
 	}
 
-	metas, err := json.Marshal(ins.Metadata)
+	metadata, err := json.Marshal(ins.Metadata)
 	if err != nil {
 		return err
 	}
@@ -82,7 +83,7 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 			metaFieldServices: string(services),
 			metaFieldEndpoint: ins.Endpoint,
 			metaFieldWeight:   xconv.String(ins.Weight),
-			metaFieldMetadata: string(metas),
+			metaFieldMetadata: string(metadata),
 		},
 	}
 
@@ -99,7 +100,7 @@ func (r *registrar) register(ctx context.Context, ins *registry.ServiceInstance)
 }
 
 // 解注册服务
-func (r *registrar) deregister(ctx context.Context, ins *registry.ServiceInstance) error {
+func (r *registrar) deregister(_ context.Context, ins *registry.ServiceInstance) error {
 	host, port, err := r.parseHostPort(ins.Endpoint)
 	if err != nil {
 		return err
