@@ -10,6 +10,7 @@ testdata/log/
 # Develop tools
 .vscode
 .idea/
+.trae
 
 # Go workspace
 go.work

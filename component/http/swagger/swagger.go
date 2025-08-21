@@ -21,9 +21,9 @@ type Config struct {
 }
 
 const (
-	defaultSwaggerBundleUrl = "https://lf26-cdn-tos.bytecdntp.com/cdn/expire-1-M/swagger-ui/4.5.2/swagger-ui-bundle.min.js"
-	defaultSwaggerPresetUrl = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/swagger-ui/4.5.2/swagger-ui-standalone-preset.min.js"
-	defaultSwaggerStylesUrl = "https://lf6-cdn-tos.bytecdntp.com/cdn/expire-1-M/swagger-ui/4.5.2/swagger-ui.min.css"
+	defaultSwaggerBundleUrl = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.5.2/swagger-ui-bundle.min.js"
+	defaultSwaggerPresetUrl = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.5.2/swagger-ui-standalone-preset.min.js"
+	defaultSwaggerStylesUrl = "https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.5.2/swagger-ui.min.css"
 	swaggerFavicon32Latest  = "https://unpkg.com/swagger-ui-dist/favicon-32x32.png"
 	swaggerFavicon16Latest  = "https://unpkg.com/swagger-ui-dist/favicon-16x16.png"
 )
