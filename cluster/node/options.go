@@ -153,5 +153,9 @@ func WithWeight(weight int) Option {
 
 // WithMetadata 设置元数据
 func WithMetadata(md map[string]string) Option {
-	return func(o *options) { o.metadata = md }
+	return func(o *options) {
+		for k, v := range md {
+			o.metadata[k] = v
+		}
+	}
 }
