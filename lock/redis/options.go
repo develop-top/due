@@ -11,7 +11,7 @@ const (
 	defaultAddr              = "127.0.0.1:6379"
 	defaultDB                = 0
 	defaultMaxRetries        = 3
-	defaultPrefix            = "lock"
+	defaultPrefix            = "due:lock"
 	defaultExpiration        = "3s"
 	defaultAcquireInterval   = "20ms"
 	defaultAcquireMaxRetries = 0
@@ -24,6 +24,9 @@ const (
 	defaultPrefixKey            = "etc.lock.redis.prefix"
 	defaultUsernameKey          = "etc.lock.redis.username"
 	defaultPasswordKey          = "etc.lock.redis.password"
+	defaultCertFileKey          = "etc.lock.redis.certFile"
+	defaultKeyFileKey           = "etc.lock.redis.keyFile"
+	defaultCaFileKey            = "etc.lock.redis.caFile"
 	defaultExpirationKey        = "etc.lock.redis.expiration"
 	defaultAcquireIntervalKey   = "etc.lock.redis.acquireInterval"
 	defaultAcquireMaxRetriesKey = "etc.lock.redis.acquireMaxRetries"
@@ -48,6 +51,15 @@ type options struct {
 	// 内建客户端配置，默认为空
 	password string
 
+	// 客户端证书
+	certFile string
+
+	// 客户端密钥
+	keyFile string
+
+	// CA证书
+	caFile string
+
 	// 最大重试次数
 	// 内建客户端配置，默认为3次
 	maxRetries int
@@ -57,7 +69,7 @@ type options struct {
 	client redis.UniversalClient
 
 	// 前缀
-	// key前缀，默认为lock
+	// key前缀，默认为due:lock
 	prefix string
 
 	// 锁过期时间，默认为3s
@@ -78,6 +90,9 @@ func defaultOptions() *options {
 		prefix:            etc.Get(defaultPrefixKey, defaultPrefix).String(),
 		username:          etc.Get(defaultUsernameKey).String(),
 		password:          etc.Get(defaultPasswordKey).String(),
+		certFile:          etc.Get(defaultCertFileKey).String(),
+		keyFile:           etc.Get(defaultKeyFileKey).String(),
+		caFile:            etc.Get(defaultCaFileKey).String(),
 		expiration:        etc.Get(defaultExpirationKey, defaultExpiration).Duration(),
 		acquireInterval:   etc.Get(defaultAcquireIntervalKey, defaultAcquireInterval).Duration(),
 		acquireMaxRetries: etc.Get(defaultAcquireMaxRetriesKey, defaultAcquireMaxRetries).Int(),
@@ -102,6 +117,11 @@ func WithUsername(username string) Option {
 // WithPassword 设置密码
 func WithPassword(password string) Option {
 	return func(o *options) { o.password = password }
+}
+
+// WithCredentials 设置证书、密钥、CA证书
+func WithCredentials(certFile, keyFile, caFile string) Option {
+	return func(o *options) { o.certFile, o.keyFile, o.caFile = certFile, keyFile, caFile }
 }
 
 // WithMaxRetries 设置最大重试次数
