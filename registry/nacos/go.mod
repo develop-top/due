@@ -3,7 +3,7 @@ module github.com/develop-top/due/registry/nacos/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.3.3
+	github.com/develop-top/due/v2 v2.3.4
 	github.com/nacos-group/nacos-sdk-go/v2 v2.2.7
 	golang.org/x/sync v0.16.0
 )

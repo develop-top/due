@@ -3,7 +3,7 @@ module github.com/develop-top/due/config/etcd/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.3.3
+	github.com/develop-top/due/v2 v2.3.4
 	go.etcd.io/etcd/api/v3 v3.5.21
 	go.etcd.io/etcd/client/v3 v3.5.21
 )
