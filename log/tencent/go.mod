@@ -3,7 +3,7 @@ module github.com/develop-top/due/log/tencent/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.2.8
+	github.com/develop-top/due/v2 v2.3.0
 	github.com/tencentcloud/tencentcloud-cls-sdk-go v1.0.11
 )
 

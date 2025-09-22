@@ -3,7 +3,7 @@ module github.com/develop-top/due/transport/grpc/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.2.8
+	github.com/develop-top/due/v2 v2.3.0
 	golang.org/x/sync v0.16.0
 	google.golang.org/grpc v1.75.1
 )

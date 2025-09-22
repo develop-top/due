@@ -2,7 +2,7 @@ module github.com/develop-top/due/crypto/rsa/v2
 
 go 1.23.0
 
-require github.com/develop-top/due/v2 v2.2.8
+require github.com/develop-top/due/v2 v2.3.0
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
@@ -13,7 +13,6 @@ require (
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/jinzhu/copier v0.4.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.8 // indirect
-	github.com/stretchr/testify v1.11.1 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.11.0 // indirect
 	golang.org/x/sync v0.16.0 // indirect
