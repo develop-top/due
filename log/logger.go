@@ -7,9 +7,10 @@ import (
 	"runtime"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/develop-top/due/v2/core/stack"
+	"github.com/develop-top/due/v2/log/console"
+	"github.com/develop-top/due/v2/log/file"
 	"github.com/develop-top/due/v2/utils/xtime"
 	"golang.org/x/sync/errgroup"
 )
@@ -55,7 +56,6 @@ type terminal struct {
 type defaultLogger struct {
 	opts      *options
 	pool      *sync.Pool
-	loc       *time.Location
 	terminals []*terminal
 }
 
@@ -69,18 +69,71 @@ func NewLogger(opts ...Option) *defaultLogger {
 	l.opts = o
 	l.pool = &sync.Pool{New: func() any { return &Entity{} }}
 
+	syncers := make(map[string]Syncer, len(l.opts.syncers))
+	for _, syncer := range l.opts.syncers {
+		syncers[syncer.Name()] = syncer
+	}
+
 	switch v := l.opts.terminals.(type) {
 	case []Terminal:
 		for _, name := range v {
-			if syncer, ok := syncers[string(name)]; ok {
+			syncer, ok := syncers[string(name)]
+			if !ok {
+				switch name {
+				case TerminalConsole:
+					syncer = console.NewSyncer()
+				case TerminalFile:
+					syncer = file.NewSyncer()
+				}
+			}
+
+			if syncer == nil {
+				continue
+			}
+
+			l.terminals = append(l.terminals, &terminal{
+				syncer: syncer,
+			})
+		}
+	case [][]Terminal:
+		if len(v) > 0 {
+			for _, name := range v[0] {
+				syncer, ok := syncers[string(name)]
+				if !ok {
+					switch name {
+					case TerminalConsole:
+						syncer = console.NewSyncer()
+					case TerminalFile:
+						syncer = file.NewSyncer()
+					}
+				}
+
+				if syncer == nil {
+					continue
+				}
+
 				l.terminals = append(l.terminals, &terminal{
 					syncer: syncer,
 				})
 			}
 		}
-	case map[Terminal][]Level:
-		for name, levels := range v {
-			if syncer, ok := syncers[string(name)]; ok {
+	case []map[Terminal][]Level:
+		if len(v) > 0 {
+			for name, levels := range v[0] {
+				syncer, ok := syncers[string(name)]
+				if !ok {
+					switch name {
+					case TerminalConsole:
+						syncer = console.NewSyncer()
+					case TerminalFile:
+						syncer = file.NewSyncer()
+					}
+				}
+
+				if syncer == nil {
+					continue
+				}
+
 				t := &terminal{
 					syncer: syncer,
 					levels: make(map[Level]bool, len(levels)),
@@ -204,17 +257,20 @@ func (l *defaultLogger) print(level Level, isOutStack bool, a ...any) {
 
 		if entity == nil {
 			entity = l.makeEntity(level, isOutStack, a...)
-			defer l.releaseEntity(entity)
 		}
 
 		t.syncer.Write(entity)
+	}
+
+	if entity != nil {
+		l.releaseEntity(entity)
 	}
 }
 
 // 释放实体
 func (l *defaultLogger) releaseEntity(e *Entity) {
-	e.Level = LevelNone
 	e.Time = ""
+	e.Level = LevelNone
 	e.Message = ""
 	e.Caller = ""
 	e.Frames = nil
@@ -225,8 +281,9 @@ func (l *defaultLogger) releaseEntity(e *Entity) {
 // 构建实体信息
 func (l *defaultLogger) makeEntity(level Level, isOutStack bool, a ...any) *Entity {
 	e := l.pool.Get().(*Entity)
+	e.Now = xtime.Now()
+	e.Time = e.Now.Format(l.opts.timeFormat)
 	e.Level = level
-	e.Time = l.makeTime()
 	e.Message = l.makeMessage(a...)
 
 	if isOutStack && l.opts.stackLevel != "" && l.opts.stackLevel != LevelNone && level.Priority() >= l.opts.stackLevel.Priority() {
@@ -238,23 +295,24 @@ func (l *defaultLogger) makeEntity(level Level, isOutStack bool, a ...any) *Enti
 	return e
 }
 
-// 构建时间
-func (l *defaultLogger) makeTime() string {
-	return xtime.Now().Format(l.opts.timeFormat)
-}
-
 // 构建日志消息
-func (l *defaultLogger) makeMessage(a ...any) string {
-	if c := len(a); c > 0 {
-		return strings.TrimSuffix(fmt.Sprintf(strings.TrimSuffix(strings.Repeat("%v ", c), " "), a...), "\n")
-	} else {
-		return ""
+func (l *defaultLogger) makeMessage(a ...any) (message string) {
+	for i, v := range a {
+		if i == len(a)-1 {
+			message += fmt.Sprintf("%v", v)
+		} else {
+			message += fmt.Sprintf("%v ", v)
+		}
 	}
+
+	message = strings.TrimSuffix(message, "\n")
+
+	return
 }
 
 // 构建堆栈信息
 func (l *defaultLogger) makeStack(depth stack.Depth) (string, []runtime.Frame) {
-	st := stack.Callers(3+l.opts.callerDepth, depth)
+	st := stack.Callers(3+l.opts.callSkip, depth)
 	defer st.Free()
 
 	var (
@@ -266,7 +324,7 @@ func (l *defaultLogger) makeStack(depth stack.Depth) (string, []runtime.Frame) {
 		file := frames[0].File
 		line := frames[0].Line
 
-		if !l.opts.callerFullPath {
+		if !l.opts.callFullPath {
 			_, file = filepath.Split(file)
 		}
 

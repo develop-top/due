@@ -1,12 +1,12 @@
 package node
 
 import (
-	"context"
-	"github.com/develop-top/due/v2/cluster"
-	"github.com/develop-top/due/v2/utils/xcall"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/develop-top/due/v2/cluster"
+	"github.com/develop-top/due/v2/utils/xcall"
 )
 
 type Creator func(actor *Actor, args ...any) Processor
@@ -18,16 +18,17 @@ const (
 )
 
 type Actor struct {
-	opts      *actorOptions                  // 配置项
-	scheduler *Scheduler                     // 调度器
-	state     atomic.Int32                   // 状态
-	routes    map[int32]RouteHandler         // 路由处理器
-	events    map[cluster.Event]EventHandler // 事件处理器
-	processor Processor                      // 处理器
-	rw        sync.RWMutex                   // 锁
-	mailbox   chan Context                   // 邮箱
-	fnChan    chan func()                    // 调用函数
-	binds     sync.Map                       // 绑定的用户
+	opts                *actorOptions                  // 配置项
+	scheduler           *Scheduler                     // 调度器
+	state               atomic.Int32                   // 状态
+	routes              map[int32]RouteHandler         // 路由处理器
+	events              map[cluster.Event]EventHandler // 事件处理器
+	defaultRouteHandler RouteHandler                   // 默认路由处理器
+	processor           Processor                      // 处理器
+	rw                  sync.RWMutex                   // 锁
+	mailbox             chan Context                   // 邮箱
+	fnChan              chan func()                    // 调用函数
+	binds               sync.Map                       // 绑定的用户
 }
 
 // ID 获取Actor的ID
@@ -107,6 +108,23 @@ func (a *Actor) AfterInvoke(d time.Duration, f func()) *Timer {
 	return &Timer{timer: timer}
 }
 
+// SetDefaultRouteHandler 设置默认路由处理器
+func (a *Actor) SetDefaultRouteHandler(handler RouteHandler) {
+	a.rw.RLock()
+	defer a.rw.RUnlock()
+
+	switch a.state.Load() {
+	case unstart:
+		a.defaultRouteHandler = handler
+	case started:
+		a.fnChan <- func() {
+			a.defaultRouteHandler = handler
+		}
+	default:
+		// ignore
+	}
+}
+
 // AddRouteHandler 添加路由处理器
 func (a *Actor) AddRouteHandler(route int32, handler RouteHandler) {
 	a.rw.RLock()
@@ -183,13 +201,13 @@ func (a *Actor) Deliver(uid int64, message *cluster.Message) error {
 }
 
 // Push 推送消息到本地Node队列上进行处理
-func (a *Actor) Push(ctx context.Context, uid int64, message *cluster.Message) error {
+func (a *Actor) Push(uid int64, message *cluster.Message) error {
 	buf, err := a.scheduler.node.proxy.PackBuffer(message.Data)
 	if err != nil {
 		return err
 	}
 
-	a.scheduler.node.router.deliver(ctx, "", a.scheduler.node.opts.id, a.PID(), 0, uid, message.Seq, message.Route, buf)
+	a.scheduler.node.router.deliver("", a.scheduler.node.opts.id, a.PID(), 0, uid, message.Seq, message.Route, buf)
 
 	return nil
 }
@@ -232,6 +250,8 @@ func (a *Actor) destroy() bool {
 
 	a.processor = nil
 
+	a.defaultRouteHandler = nil
+
 	return true
 }
 
@@ -266,6 +286,10 @@ func (a *Actor) dispatch() {
 			} else {
 				if handler, ok := a.routes[ctx.Route()]; ok {
 					xcall.Call(func() { handler(ctx) })
+
+					ctx.compareVersionExecDefer(version)
+				} else if a.defaultRouteHandler != nil {
+					xcall.Call(func() { a.defaultRouteHandler(ctx) })
 
 					ctx.compareVersionExecDefer(version)
 				}
