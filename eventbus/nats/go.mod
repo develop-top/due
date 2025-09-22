@@ -3,7 +3,7 @@ module github.com/develop-top/due/eventbus/nats/v2
 go 1.23.0
 
 require (
-	github.com/develop-top/due/v2 v2.3.2
+	github.com/develop-top/due/v2 v2.3.3
 	github.com/nats-io/nats.go v1.37.0
 )
 
@@ -25,8 +25,8 @@ require (
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	golang.org/x/arch v0.11.0 // indirect
 	golang.org/x/crypto v0.28.0 // indirect
-	golang.org/x/sync v0.13.0 // indirect
-	golang.org/x/sys v0.28.0 // indirect
+	golang.org/x/sync v0.16.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

@@ -2,9 +2,10 @@ package xtime
 
 import (
 	"fmt"
-	"github.com/develop-top/due/v2/etc"
 	"math"
 	"time"
+
+	"github.com/develop-top/due/v2/etc"
 )
 
 const (
@@ -251,7 +252,7 @@ func Month(offset ...int) Time {
 			day = 30
 		}
 	case time.February:
-		if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		if IsLeapYear(year) {
 			if day > 29 {
 				day = 29
 			}
@@ -290,14 +291,17 @@ func MonthHead(offset ...int) Time {
 // MonthTail 获取一月中的最后一天的最后一秒
 // offset 偏移月数，例如：-1：前一月 0：当前月 1：下一月
 func MonthTail(offset ...int) Time {
-	now := Now()
+	var (
+		now          = Now()
+		offsetYears  int
+		offsetMonths int
+	)
 
-	if len(offset) == 0 || offset[0] == 0 {
-		return time.Date(now.Year(), now.Month(), now.Day(), 23, 59, 59, 999999999, now.Location())
+	if len(offset) > 0 {
+		offsetYears = offset[0] / 12
+		offsetMonths = offset[0] % 12
 	}
 
-	offsetYears := offset[0] / 12
-	offsetMonths := offset[0] % 12
 	year := now.Year() + offsetYears
 	month := int(now.Month()) + offsetMonths
 
@@ -313,7 +317,7 @@ func MonthTail(offset ...int) Time {
 	case time.April, time.June, time.September, time.November:
 		day = 30
 	case time.February:
-		if (year%4 == 0 && year%100 != 0) || year%400 == 0 {
+		if IsLeapYear(year) {
 			day = 29
 		} else {
 			day = 28
@@ -321,4 +325,9 @@ func MonthTail(offset ...int) Time {
 	}
 
 	return time.Date(year, time.Month(month), day, 23, 59, 59, 999999999, now.Location())
+}
+
+// IsLeapYear 是否是闰年
+func IsLeapYear(year int) bool {
+	return (year%4 == 0 && year%100 != 0) || year%400 == 0
 }
