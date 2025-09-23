@@ -150,6 +150,10 @@ func (r *request) Clone() Context {
 		},
 	}
 
+	if r.ctx != nil {
+		c.ctx = context.WithoutCancel(r.ctx)
+	}
+
 	c.actor.Store(r.actor.Load())
 
 	return c
@@ -395,7 +399,7 @@ func (r *request) Reply(message *cluster.Message) error {
 		})
 	case r.pid != "": // 来源于Actor
 		if actor, ok := r.node.scheduler.doLoad(r.pid); ok {
-			return actor.Deliver(r.uid, message)
+			return actor.Deliver(r.ctx, r.uid, message)
 		}
 
 		return nil

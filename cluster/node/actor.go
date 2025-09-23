@@ -1,6 +1,7 @@
 package node
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -182,13 +183,14 @@ func (a *Actor) Next(ctx Context) {
 }
 
 // Deliver 投递消息到当前Actor中进行处理
-func (a *Actor) Deliver(uid int64, message *cluster.Message) error {
+func (a *Actor) Deliver(ctx context.Context, uid int64, message *cluster.Message) error {
 	buf, err := a.scheduler.node.proxy.PackBuffer(message.Data)
 	if err != nil {
 		return err
 	}
 
 	req := a.scheduler.node.reqPool.Get().(*request)
+	req.ctx = ctx
 	req.nid = a.scheduler.node.opts.id
 	req.uid = uid
 	req.message.Seq = message.Seq
@@ -201,13 +203,13 @@ func (a *Actor) Deliver(uid int64, message *cluster.Message) error {
 }
 
 // Push 推送消息到本地Node队列上进行处理
-func (a *Actor) Push(uid int64, message *cluster.Message) error {
+func (a *Actor) Push(ctx context.Context, uid int64, message *cluster.Message) error {
 	buf, err := a.scheduler.node.proxy.PackBuffer(message.Data)
 	if err != nil {
 		return err
 	}
 
-	a.scheduler.node.router.deliver("", a.scheduler.node.opts.id, a.PID(), 0, uid, message.Seq, message.Route, buf)
+	a.scheduler.node.router.deliver(ctx, "", a.scheduler.node.opts.id, a.PID(), 0, uid, message.Seq, message.Route, buf)
 
 	return nil
 }
