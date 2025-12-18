@@ -2,10 +2,22 @@ package xcall
 
 import (
 	"context"
-	"github.com/develop-top/due/v2/log"
+	"fmt"
 	"runtime"
 	"time"
+
+	"github.com/develop-top/due/v2/log"
 )
+
+type Counter interface {
+	Inc(labels ...string)
+}
+
+var metricAgent Counter
+
+func RegisterMetricsAgent(agent Counter) {
+	metricAgent = agent
+}
 
 // Call 安全地调用函数
 func Call(fn func()) {
@@ -15,11 +27,19 @@ func Call(fn func()) {
 
 	defer func() {
 		if err := recover(); err != nil {
+			var skip int
 			switch err.(type) {
 			case runtime.Error:
+				skip = 3
 				log.Panic(err)
 			default:
+				skip = 2
 				log.Panicf("panic error: %v", err)
+			}
+			if metricAgent != nil {
+				_, file, line, _ := runtime.Caller(skip)
+				location := fmt.Sprintf("%s:%d", file, line)
+				metricAgent.Inc(location)
 			}
 		}
 	}()
