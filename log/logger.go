@@ -2,10 +2,11 @@ package log
 
 import (
 	"fmt"
-	"github.com/develop-top/due/v2/mode"
 	"io"
 	"os"
 	"sync"
+
+	"github.com/develop-top/due/v2/mode"
 )
 
 type Logger interface {
@@ -110,7 +111,7 @@ func NewLogger(opts ...Option) *defaultLogger {
 		}
 	}
 
-	if mode.IsDebugMode() && o.stdout {
+	if mode.IsDebugMode() || o.stdout {
 		l.syncers = append(l.syncers, syncer{
 			writer:   os.Stdout,
 			terminal: true,

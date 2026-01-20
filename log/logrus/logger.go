@@ -8,14 +8,15 @@
 package logrus
 
 import (
+	"io"
+	"os"
+
 	"github.com/develop-top/due/log/logrus/v2/internal/define"
 	"github.com/develop-top/due/log/logrus/v2/internal/formatter"
 	"github.com/develop-top/due/log/logrus/v2/internal/hook"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/mode"
 	"github.com/sirupsen/logrus"
-	"io"
-	"os"
 )
 
 var _ log.Logger = NewLogger()
@@ -91,7 +92,7 @@ func NewLogger(opts ...Option) *Logger {
 		}
 	}
 
-	if mode.IsDebugMode() && o.stdout {
+	if mode.IsDebugMode() || o.stdout {
 		l.logger.SetOutput(os.Stdout)
 	}
 

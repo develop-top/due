@@ -9,12 +9,13 @@ package zap
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/develop-top/due/log/zap/v2/internal/encoder"
 	"github.com/develop-top/due/v2/log"
 	"github.com/develop-top/due/v2/mode"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"os"
 )
 
 var _ log.Logger = NewLogger()
@@ -91,7 +92,7 @@ func NewLogger(opts ...Option) *Logger {
 		}
 	}
 
-	if mode.IsDebugMode() && o.stdout {
+	if mode.IsDebugMode() || o.stdout {
 		cores = append(cores, zapcore.NewCore(terminalEncoder, zapcore.AddSync(os.Stdout), l.buildLevelEnabler(log.NoneLevel)))
 	}
 
