@@ -9,6 +9,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	oteltrace "go.opentelemetry.io/otel/trace"
 	"slices"
+	"strings"
 )
 
 type (
@@ -58,7 +59,7 @@ func TraceHttpHandler(serviceName, path string, opts ...TraceOption) func(ctx Co
 		}
 		defer func() {
 			if mode.IsDebugMode() {
-				span.SetAttributes(tracer.HttpResponseKey.String(ctx.Response().String()))
+				span.SetAttributes(tracer.HttpResponseKey.String(traceResponse(ctx.Response())))
 			}
 			span.SetAttributes(semconv.HTTPAttributesFromHTTPStatusCode(ctx.Response().StatusCode())...)
 			span.SetStatus(semconv.SpanStatusFromHTTPStatusCodeAndSpanKind(
@@ -73,6 +74,19 @@ func TraceHttpHandler(serviceName, path string, opts ...TraceOption) func(ctx Co
 		ctx.SetContext(spanCtx)
 		return ctx.Next()
 	}
+}
+
+func traceResponse(resp *fasthttp.Response) string {
+	if resp == nil {
+		return ""
+	}
+
+	contentType := string(resp.Header.ContentType())
+	if resp.IsBodyStream() || strings.HasPrefix(contentType, "text/event-stream") {
+		return "<streaming response omitted>"
+	}
+
+	return resp.String()
 }
 
 // WithTraceIgnorePaths specifies the traceIgnorePaths option for TraceHandler.
